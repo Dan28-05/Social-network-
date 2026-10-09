@@ -1,0 +1,8 @@
+target/
+*.class
+*.log
+cookies.txt
+.metadata/
+tmp/
+*.jar
+*.war
