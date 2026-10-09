@@ -57,10 +57,17 @@ Hoặc cấu hình thông tin kết nối trong `src/main/java/vn/iotstar/config
 - Password: `Password123!`
 
 ### 2. Khởi tạo CSDL & Dữ liệu mẫu
-Mở SQL Server Management Studio (SSMS) hoặc Azure Data Studio và thực thi file script:
-```text
-sql/init.sql
-```
+Bạn có thể chọn **1 trong 2 cách** tiện lợi sau:
+- **Cách 1 (Khuyên dùng - Đầy đủ 100% dữ liệu & ảnh đã lưu):** Sử dụng file backup `sql/InstagramDB.bak` để Restore trong SQL Server (SSMS) hoặc chạy lệnh T-SQL:
+  ```sql
+  RESTORE DATABASE InstagramDB 
+  FROM DISK = 'đường_dẫn_đến_file/sql/InstagramDB.bak' 
+  WITH REPLACE;
+  ```
+- **Cách 2:** Mở SSMS hoặc Azure Data Studio và thực thi toàn bộ nội dung file script:
+  ```text
+  sql/init.sql
+  ```
 
 ### 3. Chạy ứng dụng trên Eclipse
 1. Mở Eclipse IDE -> **File** -> **Import...** -> **Existing Maven Projects**.
