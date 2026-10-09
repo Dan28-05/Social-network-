@@ -230,12 +230,21 @@
     <!-- Modal Tạo bài viết mới dùng chung -->
     <jsp:include page="/WEB-INF/views/commons/create-modal.jsp" />
 
+    <!-- Cấu hình an toàn cho JavaScript (Tránh lỗi cú pháp JSP trong thẻ Script của Eclipse) -->
+    <div id="chatConfig"
+         data-current-user-id="${currentUser.userId}"
+         data-active-user-id="${not empty activeUser ? activeUser.userId : ''}"
+         data-active-user-avatar="${not empty activeUser ? activeUser.avatar : ''}"
+         data-context-path="${pageContext.request.contextPath}"
+         style="display:none;"></div>
+
     <!-- WebSocket & Client Logic Script -->
     <script>
-        const currentUserId = ${currentUser.userId};
-        const activeUserId = ${not empty activeUser ? activeUser.userId : 'null'};
-        const activeUserAvatar = '${not empty activeUser ? activeUser.avatar : ""}';
-        const contextPath = '${pageContext.request.contextPath}';
+        const chatConfig = document.getElementById('chatConfig');
+        const currentUserId = chatConfig && chatConfig.dataset.currentUserId ? parseInt(chatConfig.dataset.currentUserId) : null;
+        const activeUserId = chatConfig && chatConfig.dataset.activeUserId ? parseInt(chatConfig.dataset.activeUserId) : null;
+        const activeUserAvatar = chatConfig && chatConfig.dataset.activeUserAvatar ? chatConfig.dataset.activeUserAvatar : '';
+        const contextPath = chatConfig && chatConfig.dataset.contextPath ? chatConfig.dataset.contextPath : '';
 
         let chatSocket = null;
         const messagesArea = document.getElementById('chatMessagesArea');

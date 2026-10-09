@@ -105,19 +105,22 @@
                                         </c:choose>
                                     </c:set>
 
-                                    <c:choose>
-                                        <c:when test="${post.video}">
-                                            <video src="${resolvedMediaUrl}" controls playsinline loop class="post-main-image post-main-video" preload="metadata"></video>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <img src="${resolvedMediaUrl}" alt="${post.caption}" class="post-main-image" loading="lazy">
-                                        </c:otherwise>
-                                    </c:choose>
-                                    <!-- Nút mũi tên tải ảnh overlay góc trên trái -->
-                                    <div class="image-overlay-badge">
-                                        <i class="fa-solid fa-arrow-down"></i>
+                                    <!-- Khối chứa ảnh/video bài viết -->
+                                    <div class="post-media-wrap" ondblclick="handleImageDblClick(${post.postId})">
+                                        <c:choose>
+                                            <c:when test="${post.video}">
+                                                <video src="${resolvedMediaUrl}" controls playsinline loop class="post-main-image post-main-video" preload="metadata"></video>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <img src="${resolvedMediaUrl}" alt="${post.caption}" class="post-main-image" loading="lazy">
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <!-- Nút mũi tên tải ảnh overlay góc trên trái -->
+                                        <div class="image-overlay-badge">
+                                            <i class="fa-solid fa-arrow-down"></i>
+                                        </div>
+                                        <div class="heart-pop-icon" id="heartPop-${post.postId}"><i class="fa-solid fa-heart"></i></div>
                                     </div>
-                                    <div class="heart-pop-icon" id="heartPop-${post.postId}"><i class="fa-solid fa-heart"></i></div>
                                 </div>
 
                                 <!-- Thanh công cụ biểu tượng tương tác -->
@@ -167,7 +170,7 @@
                                         </c:choose>
                                     </div>
 
-                                    <!-- Preview bình luận mới nhất ngay dưới bài viết -->
+                                    <!-- Preview 2 bình luận mới nhất ngay dưới bài viết -->
                                     <div class="post-comments-preview" id="commentsPreview-${post.postId}">
                                         <c:forEach items="${postComments[post.postId]}" var="cmt" varStatus="st">
                                             <c:if test="${st.index < 2}">
@@ -226,7 +229,7 @@
                                     </a>
                                     <div class="sugg-names">
                                         <a href="${pageContext.request.contextPath}/profile/user/${su.userId}" class="sugg-handle">${su.username}</a>
-                                        <span class="sugg-sub">${not empty su.fullname ? su.fullname : 'Gợi ý cho bạn'}</span>
+                                        <span class="sugg-sub"><c:out value="${not empty su.fullname ? su.fullname : 'Gợi ý cho bạn'}" /></span>
                                     </div>
                                     <button type="button" 
                                             class="btn-blue-follow ${isFollowed ? 'is-following' : ''}" 
@@ -295,8 +298,12 @@
     <!-- Modal Tạo Bài Viết Mới Chuẩn Instagram Hiện Đại -->
     <jsp:include page="/WEB-INF/views/commons/create-modal.jsp" />
 
+    <!-- Cấu hình an toàn cho JavaScript (Tránh lỗi cú pháp JSP trong thẻ Script của Eclipse) -->
+    <div id="homeConfig" data-context-path="${pageContext.request.contextPath}" style="display:none;"></div>
+
     <script>
-        const contextPath = '${pageContext.request.contextPath}';
+        const homeConfig = document.getElementById('homeConfig');
+        const contextPath = homeConfig && homeConfig.dataset.contextPath ? homeConfig.dataset.contextPath : '';
 
         // 1. Thích / Bỏ thích bài viết qua AJAX
         function handleToggleLike(postId, btn) {
@@ -514,7 +521,7 @@
         // Toggle Follow bạn bè
         function handleToggleFollow(userId, btn) {
             btn.disabled = true;
-            fetch('${pageContext.request.contextPath}/api/follow/' + userId, {
+            fetch(contextPath + '/api/follow/' + userId, {
                 method: 'POST'
             })
             .then(res => res.json())
