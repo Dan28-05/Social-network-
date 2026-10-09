@@ -224,7 +224,7 @@
     </div>
 
     <!-- Nút Nổi "Messages" Góc Dưới Phải Chuẩn Ảnh Người Dùng -->
-    <div class="floating-messages-pill" onclick="alert('Tính năng tin nhắn trực tiếp Direct Messages!')">
+    <div class="floating-messages-pill" onclick="window.location.href='${pageContext.request.contextPath}/direct'">
         <i class="fa-regular fa-paper-plane"></i>
         <span>Messages</span>
         <div class="floating-avatars">

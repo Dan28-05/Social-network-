@@ -45,7 +45,7 @@
                                             onclick="handleProfileFollow('${profileUser.userId}', this)">
                                         ${isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
                                     </button>
-                                    <button class="btn-dark-pill">Nhắn tin</button>
+                                    <a href="${pageContext.request.contextPath}/direct/t/${profileUser.userId}" class="btn-dark-pill">Nhắn tin</a>
                                 </c:otherwise>
                             </c:choose>
                             <button class="btn-gear-icon"><i class="fa-solid fa-gear"></i></button>

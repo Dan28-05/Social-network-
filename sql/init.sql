@@ -64,7 +64,23 @@ BEGIN
 END
 GO
 
--- 5. Dữ liệu mẫu (Insert sample data nếu chưa có)
+-- 5. Bảng MESSAGES (Tin nhắn trực tiếp / Chat Realtime)
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Messages')
+BEGIN
+    CREATE TABLE Messages (
+        message_id INT IDENTITY(1,1) PRIMARY KEY,
+        sender_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        content NVARCHAR(MAX) NOT NULL,
+        created_at DATETIME DEFAULT GETDATE(),
+        is_read BIT DEFAULT 0,
+        CONSTRAINT FK_Messages_Sender FOREIGN KEY (sender_id) REFERENCES Users(user_id),
+        CONSTRAINT FK_Messages_Receiver FOREIGN KEY (receiver_id) REFERENCES Users(user_id)
+    );
+END
+GO
+
+-- 6. Dữ liệu mẫu (Insert sample data nếu chưa có)
 IF NOT EXISTS (SELECT * FROM Users WHERE username = 'nguyenvana')
 BEGIN
     INSERT INTO Users (username, password, email, fullname, avatar, bio)

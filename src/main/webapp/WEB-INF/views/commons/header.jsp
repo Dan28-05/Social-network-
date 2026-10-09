@@ -35,10 +35,9 @@
             <span class="nav-label">Reels</span>
         </a>
 
-        <a href="javascript:void(0)" class="nav-item" title="Tin nhắn (Messages)">
+        <a href="${pageContext.request.contextPath}/direct" class="nav-item" title="Tin nhắn (Messages)">
             <i class="fa-brands fa-facebook-messenger nav-icon"></i>
             <span class="nav-label">Messages</span>
-            <span class="nav-badge">3</span>
         </a>
 
         <a href="javascript:void(0)" class="nav-item" title="Thông báo (Notifications)">
