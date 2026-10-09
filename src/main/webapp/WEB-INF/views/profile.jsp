@@ -125,8 +125,8 @@
 
                                     <div class="grid-card-overlay">
                                         <div class="grid-hover-stats">
-                                            <span><i class="fa-solid fa-heart"></i> 48</span>
-                                            <span><i class="fa-solid fa-comment"></i> 12</span>
+                                            <span><i class="fa-solid fa-heart"></i> ${likeCounts[post.postId] != null ? likeCounts[post.postId] : 0}</span>
+                                            <span><i class="fa-solid fa-comment"></i> ${commentCounts[post.postId] != null ? commentCounts[post.postId] : 0}</span>
                                         </div>
                                         <c:if test="${isOwner}">
                                             <form action="${pageContext.request.contextPath}/posts/delete/${post.postId}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này khỏi trang cá nhân?');">

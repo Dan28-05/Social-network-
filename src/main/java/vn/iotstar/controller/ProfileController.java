@@ -26,6 +26,12 @@ public class ProfileController {
 	@Autowired
 	private vn.iotstar.services.FollowService followService;
 
+	@Autowired
+	private vn.iotstar.services.LikeService likeService;
+
+	@Autowired
+	private vn.iotstar.services.CommentService commentService;
+
 	// Xem trang cá nhân của bản thân
 	@GetMapping
 	public String myProfile(HttpSession session, Model model) {
@@ -42,11 +48,17 @@ public class ProfileController {
 		long followerCount = followService.getFollowerCount(user.getUserId());
 		long followingCount = followService.getFollowingCount(user.getUserId());
 
+		List<Integer> postIds = myPosts.stream().map(Post::getPostId).collect(java.util.stream.Collectors.toList());
+		java.util.Map<Integer, Long> likeCounts = likeService.getLikeCountsMap(postIds);
+		java.util.Map<Integer, Long> commentCounts = commentService.getCommentCountsMap(postIds);
+
 		model.addAttribute("profileUser", user);
 		model.addAttribute("posts", myPosts);
 		model.addAttribute("isOwner", true);
 		model.addAttribute("followerCount", followerCount);
 		model.addAttribute("followingCount", followingCount);
+		model.addAttribute("likeCounts", likeCounts);
+		model.addAttribute("commentCounts", commentCounts);
 		return "profile";
 	}
 
@@ -66,12 +78,18 @@ public class ProfileController {
 		long followingCount = followService.getFollowingCount(profileUser.getUserId());
 
 		List<Post> userPosts = postService.getPostsByUserId(profileUser.getUserId());
+		List<Integer> postIds = userPosts.stream().map(Post::getPostId).collect(java.util.stream.Collectors.toList());
+		java.util.Map<Integer, Long> likeCounts = likeService.getLikeCountsMap(postIds);
+		java.util.Map<Integer, Long> commentCounts = commentService.getCommentCountsMap(postIds);
+
 		model.addAttribute("profileUser", profileUser);
 		model.addAttribute("posts", userPosts);
 		model.addAttribute("isOwner", isOwner);
 		model.addAttribute("isFollowing", isFollowing);
 		model.addAttribute("followerCount", followerCount);
 		model.addAttribute("followingCount", followingCount);
+		model.addAttribute("likeCounts", likeCounts);
+		model.addAttribute("commentCounts", commentCounts);
 		return "profile";
 	}
 

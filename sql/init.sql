@@ -80,7 +80,37 @@ BEGIN
 END
 GO
 
--- 6. Dữ liệu mẫu (Insert sample data nếu chưa có)
+-- 6. Bảng LIKES (Lượt thích bài viết)
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Likes')
+BEGIN
+    CREATE TABLE Likes (
+        like_id INT IDENTITY(1,1) PRIMARY KEY,
+        post_id INT NOT NULL,
+        user_id INT NOT NULL,
+        created_at DATETIME DEFAULT GETDATE(),
+        CONSTRAINT FK_Likes_Posts FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE,
+        CONSTRAINT FK_Likes_Users FOREIGN KEY (user_id) REFERENCES Users(user_id),
+        CONSTRAINT UQ_Likes_User_Post UNIQUE (post_id, user_id)
+    );
+END
+GO
+
+-- 7. Bảng COMMENTS (Bình luận bài viết)
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Comments')
+BEGIN
+    CREATE TABLE Comments (
+        comment_id INT IDENTITY(1,1) PRIMARY KEY,
+        post_id INT NOT NULL,
+        user_id INT NOT NULL,
+        content NVARCHAR(1000) NOT NULL,
+        created_at DATETIME DEFAULT GETDATE(),
+        CONSTRAINT FK_Comments_Posts FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE,
+        CONSTRAINT FK_Comments_Users FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    );
+END
+GO
+
+-- 8. Dữ liệu mẫu (Insert sample data nếu chưa có)
 IF NOT EXISTS (SELECT * FROM Users WHERE username = 'nguyenvana')
 BEGIN
     INSERT INTO Users (username, password, email, fullname, avatar, bio)

@@ -117,42 +117,80 @@
                                     <div class="image-overlay-badge">
                                         <i class="fa-solid fa-arrow-down"></i>
                                     </div>
+                                    <div class="heart-pop-icon" id="heartPop-${post.postId}"><i class="fa-solid fa-heart"></i></div>
                                 </div>
 
                                 <!-- Thanh công cụ biểu tượng tương tác -->
                                 <div class="post-toolbar">
                                     <div class="toolbar-left">
-                                        <button class="toolbar-btn btn-like" onclick="this.classList.toggle('liked');">
+                                        <button type="button" 
+                                                class="toolbar-btn btn-like ${likedPostIds.contains(post.postId) ? 'liked' : ''}" 
+                                                id="likeBtn-${post.postId}" 
+                                                onclick="handleToggleLike(${post.postId}, this)"
+                                                title="Thích bài viết">
                                             <i class="fa-regular fa-heart heart-outline"></i>
                                             <i class="fa-solid fa-heart heart-filled"></i>
                                         </button>
-                                        <button class="toolbar-btn"><i class="fa-regular fa-comment"></i></button>
-                                        <button class="toolbar-btn"><i class="fa-regular fa-paper-plane"></i></button>
+                                        <button type="button" class="toolbar-btn" onclick="focusCommentInput(${post.postId})" title="Bình luận">
+                                            <i class="fa-regular fa-comment"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" onclick="window.location.href='${pageContext.request.contextPath}/direct?userId=${post.user.userId}'" title="Nhắn tin riêng">
+                                            <i class="fa-regular fa-paper-plane"></i>
+                                        </button>
                                     </div>
                                     <div class="toolbar-right">
-                                        <button class="toolbar-btn"><i class="fa-regular fa-bookmark"></i></button>
+                                        <button type="button" class="toolbar-btn" title="Lưu bài viết"><i class="fa-regular fa-bookmark"></i></button>
                                     </div>
                                 </div>
 
-                                <!-- Phần thích & Nội dung caption -->
+                                <!-- Phần thích & Nội dung caption & Bình luận -->
                                 <div class="post-captions-block">
-                                    <div class="likes-text">48 lượt thích</div>
+                                    <div class="likes-text" id="likesText-${post.postId}">
+                                        <span id="likeCount-${post.postId}">${likeCounts[post.postId] != null ? likeCounts[post.postId] : 0}</span> lượt thích
+                                    </div>
                                     <c:if test="${not empty post.caption}">
                                         <div class="caption-row">
                                             <a href="${pageContext.request.contextPath}/profile/user/${post.user.userId}" class="caption-user">${post.user.username}</a>
-                                            <span class="caption-content">${post.caption}</span>
+                                            <span class="caption-content"><c:out value="${post.caption}" /></span>
                                         </div>
                                     </c:if>
-                                    <div class="view-comments-btn">Xem tất cả 12 bình luận</div>
+
+                                    <!-- Xem tất cả bình luận -->
+                                    <div class="view-comments-btn" id="viewCommentsBtn-${post.postId}" onclick="openCommentsModal(${post.postId})">
+                                        <c:choose>
+                                            <c:when test="${commentCounts[post.postId] > 0}">
+                                                Xem tất cả <span id="commentCount-${post.postId}">${commentCounts[post.postId]}</span> bình luận
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span id="commentCountText-${post.postId}">Chưa có bình luận nào. Hãy là người đầu tiên!</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+
+                                    <!-- Preview bình luận mới nhất ngay dưới bài viết -->
+                                    <div class="post-comments-preview" id="commentsPreview-${post.postId}">
+                                        <c:forEach items="${postComments[post.postId]}" var="cmt" varStatus="st">
+                                            <c:if test="${st.index < 2}">
+                                                <div class="comment-preview-row" id="commentItem-${cmt.commentId}">
+                                                    <a href="${pageContext.request.contextPath}/profile/user/${cmt.user.userId}" class="caption-user">${cmt.user.username}</a>
+                                                    <span class="caption-content"><c:out value="${cmt.content}" /></span>
+                                                    <c:if test="${cmt.user.userId == currentUser.userId || post.user.userId == currentUser.userId}">
+                                                        <button type="button" class="btn-delete-comment-sm" onclick="handleDeleteComment(${cmt.commentId}, ${post.postId})" title="Xóa bình luận">&times;</button>
+                                                    </c:if>
+                                                </div>
+                                            </c:if>
+                                        </c:forEach>
+                                    </div>
+
                                     <div class="post-timestamp"><fmt:formatDate value="${post.createdAt}" pattern="dd 'THÁNG' MM, yyyy" /></div>
                                 </div>
 
                                 <!-- Hộp bình luận -->
-                                <div class="post-comment-input-row">
-                                    <i class="fa-regular fa-face-smile smile-btn"></i>
-                                    <input type="text" placeholder="Thêm bình luận..." class="ig-comment-field" />
-                                    <button class="btn-post-send">Đăng</button>
-                                </div>
+                                <form class="post-comment-input-row" onsubmit="handlePostComment(event, ${post.postId})">
+                                    <i class="fa-regular fa-face-smile smile-btn" onclick="insertQuickEmoji(${post.postId}, '❤️')" title="Thêm emoji"></i>
+                                    <input type="text" id="commentInput-${post.postId}" placeholder="Thêm bình luận..." class="ig-comment-field" autocomplete="off" required />
+                                    <button type="submit" class="btn-post-send" id="btnSendComment-${post.postId}">Đăng</button>
+                                </form>
                             </article>
                         </c:forEach>
                     </div>
@@ -233,10 +271,247 @@
         </div>
     </div>
 
+    <!-- Modal Xem & Quản lý tất cả bình luận chuẩn Instagram -->
+    <div id="commentsModal" class="ig-modal-overlay">
+        <div class="comments-modal-dialog">
+            <div class="comments-modal-header">
+                <span class="comments-modal-title">Bình luận</span>
+                <button type="button" class="modal-close" onclick="closeCommentsModal()">&times;</button>
+            </div>
+            <div class="comments-modal-body" id="modalCommentsList">
+                <!-- Danh sách bình luận load động qua AJAX -->
+            </div>
+            <div class="comments-modal-footer">
+                <form id="modalCommentForm" onsubmit="handleModalSubmitComment(event)" class="post-comment-input-row">
+                    <input type="hidden" id="modalPostId" value="">
+                    <i class="fa-regular fa-face-smile smile-btn" onclick="insertModalEmoji('❤️')"></i>
+                    <input type="text" id="modalCommentInput" placeholder="Thêm bình luận..." class="ig-comment-field" autocomplete="off" required>
+                    <button type="submit" class="btn-post-send">Đăng</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Tạo Bài Viết Mới Chuẩn Instagram Hiện Đại -->
     <jsp:include page="/WEB-INF/views/commons/create-modal.jsp" />
 
     <script>
+        const contextPath = '${pageContext.request.contextPath}';
+
+        // 1. Thích / Bỏ thích bài viết qua AJAX
+        function handleToggleLike(postId, btn) {
+            fetch(contextPath + '/api/posts/' + postId + '/like', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.liked) {
+                            btn.classList.add('liked');
+                        } else {
+                            btn.classList.remove('liked');
+                        }
+                        const countSpan = document.getElementById('likeCount-' + postId);
+                        if (countSpan) countSpan.textContent = data.likeCount;
+                    }
+                })
+                .catch(err => console.error('Error toggling like:', err));
+        }
+
+        // 2. Nhấp đúp vào ảnh để thả tim (Double-click like animation)
+        function handleImageDblClick(postId) {
+            const popHeart = document.getElementById('heartPop-' + postId);
+            if (popHeart) {
+                popHeart.classList.add('pop');
+                setTimeout(() => popHeart.classList.remove('pop'), 800);
+            }
+            const likeBtn = document.getElementById('likeBtn-' + postId);
+            if (likeBtn && !likeBtn.classList.contains('liked')) {
+                handleToggleLike(postId, likeBtn);
+            }
+        }
+
+        // 3. Focus vào ô bình luận
+        function focusCommentInput(postId) {
+            const input = document.getElementById('commentInput-' + postId);
+            if (input) {
+                input.focus();
+            }
+        }
+
+        // 4. Thêm bình luận dưới bài viết trên Feed
+        function handlePostComment(e, postId) {
+            e.preventDefault();
+            const input = document.getElementById('commentInput-' + postId);
+            if (!input) return;
+            const content = input.value.trim();
+            if (!content) return;
+
+            const formData = new URLSearchParams();
+            formData.append('content', content);
+
+            fetch(contextPath + '/api/posts/' + postId + '/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: formData.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    updateCommentCountUI(postId, data.commentCount);
+
+                    const previewContainer = document.getElementById('commentsPreview-' + postId);
+                    if (previewContainer) {
+                        const row = document.createElement('div');
+                        row.className = 'comment-preview-row';
+                        row.id = 'commentItem-' + data.comment.commentId;
+                        row.innerHTML = '<a href="' + contextPath + '/profile/user/' + data.comment.userId + '" class="caption-user">' + escapeHtml(data.comment.username) + '</a> ' +
+                                        '<span class="caption-content">' + escapeHtml(data.comment.content) + '</span> ' +
+                                        '<button type="button" class="btn-delete-comment-sm" onclick="handleDeleteComment(' + data.comment.commentId + ', ' + postId + ')" title="Xóa bình luận">&times;</button>';
+                        previewContainer.appendChild(row);
+                    }
+                } else {
+                    alert(data.message || 'Lỗi khi gửi bình luận');
+                }
+            })
+            .catch(err => console.error('Error adding comment:', err));
+        }
+
+        // 5. Xóa bình luận
+        function handleDeleteComment(commentId, postId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
+
+            const formData = new URLSearchParams();
+            if (postId) formData.append('postId', postId);
+
+            fetch(contextPath + '/api/comments/' + commentId + '/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: formData.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const item = document.getElementById('commentItem-' + commentId);
+                    if (item) item.remove();
+                    const modalItem = document.getElementById('modalCommentItem-' + commentId);
+                    if (modalItem) modalItem.remove();
+
+                    if (postId && data.commentCount !== undefined) {
+                        updateCommentCountUI(postId, data.commentCount);
+                    }
+                }
+            })
+            .catch(err => console.error('Error deleting comment:', err));
+        }
+
+        function updateCommentCountUI(postId, count) {
+            const btn = document.getElementById('viewCommentsBtn-' + postId);
+            if (btn) {
+                if (count > 0) {
+                    btn.innerHTML = 'Xem tất cả <span id="commentCount-' + postId + '">' + count + '</span> bình luận';
+                } else {
+                    btn.innerHTML = '<span id="commentCountText-' + postId + '">Chưa có bình luận nào. Hãy là người đầu tiên!</span>';
+                }
+            }
+        }
+
+        // 6. Modal xem tất cả bình luận
+        function openCommentsModal(postId) {
+            const modal = document.getElementById('commentsModal');
+            const list = document.getElementById('modalCommentsList');
+            const inputHidden = document.getElementById('modalPostId');
+            if (!modal || !list) return;
+
+            inputHidden.value = postId;
+            list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 30px;">Đang tải bình luận...</div>';
+            modal.classList.add('show');
+
+            fetch(contextPath + '/api/posts/' + postId + '/comments')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.comments.length === 0) {
+                            list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">Chưa có bình luận nào. Hãy là người đầu tiên để lại bình luận!</div>';
+                        } else {
+                            list.innerHTML = '';
+                            data.comments.forEach(c => {
+                                const div = document.createElement('div');
+                                div.className = 'modal-comment-item';
+                                div.id = 'modalCommentItem-' + c.commentId;
+                                div.innerHTML = 
+                                    '<img src="' + escapeHtml(c.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150') + '" class="modal-comment-avatar" alt="Avatar">' +
+                                    '<div class="modal-comment-content">' +
+                                        '<div><strong>' + escapeHtml(c.username) + '</strong> <span style="color: #e5e5e5; margin-left: 6px;">' + escapeHtml(c.content) + '</span></div>' +
+                                        '<div class="modal-comment-meta">' +
+                                            '<span>' + escapeHtml(c.createdAt) + '</span>' +
+                                            (c.canDelete ? '<span class="modal-delete-btn" onclick="handleDeleteComment(' + c.commentId + ', ' + postId + ')">Xóa</span>' : '') +
+                                        '</div>' +
+                                    '</div>';
+                                list.appendChild(div);
+                            });
+                        }
+                    }
+                })
+                .catch(err => {
+                    list.innerHTML = '<div style="text-align: center; color: red;">Không thể tải bình luận.</div>';
+                });
+        }
+
+        function closeCommentsModal() {
+            const modal = document.getElementById('commentsModal');
+            if (modal) modal.classList.remove('show');
+        }
+
+        function handleModalSubmitComment(e) {
+            e.preventDefault();
+            const inputHidden = document.getElementById('modalPostId');
+            const input = document.getElementById('modalCommentInput');
+            if (!inputHidden || !input) return;
+
+            const postId = inputHidden.value;
+            const content = input.value.trim();
+            if (!postId || !content) return;
+
+            const formData = new URLSearchParams();
+            formData.append('content', content);
+
+            fetch(contextPath + '/api/posts/' + postId + '/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: formData.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    openCommentsModal(postId);
+                    updateCommentCountUI(postId, data.commentCount);
+                }
+            });
+        }
+
+        function insertQuickEmoji(postId, emoji) {
+            const input = document.getElementById('commentInput-' + postId);
+            if (input) {
+                input.value += emoji;
+                input.focus();
+            }
+        }
+
+        function insertModalEmoji(emoji) {
+            const input = document.getElementById('modalCommentInput');
+            if (input) {
+                input.value += emoji;
+                input.focus();
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // Toggle Follow bạn bè
         function handleToggleFollow(userId, btn) {
             btn.disabled = true;
             fetch('${pageContext.request.contextPath}/api/follow/' + userId, {
