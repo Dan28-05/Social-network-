@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram</title>
+    <title>QNU_Confesstion</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,7 +215,7 @@
                             <a href="javascript:void(0)">Meta Verified</a>
                         </div>
                         <div class="meta-copyright">
-                            &copy; 2026 INSTAGRAM FROM META
+                            &copy; 2026 QNU_CONFESSTION
                         </div>
                     </footer>
                 </aside>

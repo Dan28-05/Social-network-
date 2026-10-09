@@ -3,13 +3,13 @@
 
 <!-- Instagram Left Sidebar Navigation (Dark Mode) -->
 <aside class="ig-sidebar">
-    <!-- Instagram Logo Top -->
+    <!-- QNU_Confesstion Logo Top -->
     <div class="sidebar-logo">
         <a href="${pageContext.request.contextPath}/" class="logo-full">
-            <span class="logo-text">Instagram</span>
+            <span class="logo-text">QNU_Confesstion</span>
         </a>
-        <a href="${pageContext.request.contextPath}/" class="logo-compact">
-            <i class="fa-brands fa-instagram"></i>
+        <a href="${pageContext.request.contextPath}/" class="logo-compact" title="QNU_Confesstion">
+            <i class="fa-solid fa-graduation-cap"></i>
         </a>
     </div>
 

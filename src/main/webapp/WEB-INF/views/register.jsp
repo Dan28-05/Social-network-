@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký &bull; Instagram</title>
+    <title>Đăng ký &bull; QNU_Confesstion</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
     <div class="dark-auth-container">
         <!-- Card Đăng ký Dark Mode -->
         <div class="dark-auth-card">
-            <h1 class="dark-insta-logo">Instagram</h1>
+            <h1 class="dark-insta-logo">QNU_Confesstion</h1>
             <p class="dark-auth-sub">Đăng ký để xem ảnh và video từ bạn bè.</p>
 
             <c:if test="${not empty error}">

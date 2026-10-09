@@ -1,6 +1,6 @@
-# Instagram Clone - Mạng Xã Hội (Spring MVC + SQL Server)
+# QNU_Confesstion - Mạng Xã Hội Sinh Viên (Spring MVC + SQL Server)
 
-Dự án mạng xã hội mô phỏng giao diện và tính năng chuẩn **Instagram Dark Mode**, được xây dựng bằng **Spring MVC (JavaConfig thuần - không dùng XML)** kết hợp **Spring Data JPA / Hibernate** và cơ sở dữ liệu **Microsoft SQL Server**.
+Dự án mạng xã hội **QNU_Confesstion** với giao diện Dark Mode hiện đại, được xây dựng bằng **Spring MVC (JavaConfig thuần - không dùng XML)** kết hợp **Spring Data JPA / Hibernate** và cơ sở dữ liệu **Microsoft SQL Server**.
 
 ---
 

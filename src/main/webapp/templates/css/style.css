@@ -126,7 +126,7 @@ input, textarea {
 
 .logo-full .logo-text {
     font-family: var(--font-logo);
-    font-size: 32px;
+    font-size: 26px;
     color: var(--text-white);
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -1331,7 +1331,7 @@ input, textarea {
 
 .dark-insta-logo {
     font-family: var(--font-logo);
-    font-size: 48px;
+    font-size: 42px;
     color: var(--text-white);
     margin-bottom: 24px;
     letter-spacing: 0.5px;
