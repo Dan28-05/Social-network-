@@ -97,7 +97,11 @@
                                 <a href="javascript:void(0)" 
                                    class="inbox-story-bubble" 
                                    title="Trò chuyện với ${su.fullname} (@${su.username})"
-                                   onclick="switchChatPartner(${su.userId}, '${su.username}', '${su.fullname}', '${su.avatar}', event); return false;">
+                                   data-user-id="${su.userId}"
+                                   data-username="${su.username}"
+                                   data-fullname="${su.fullname}"
+                                   data-avatar="${su.avatar}"
+                                   onclick="handleChatPartnerClick(this, event); return false;">
                                     <div class="inbox-story-avatar-wrap story-gradient">
                                         <img src="${su.avatar}" alt="${su.username}" class="inbox-story-img">
                                     </div>
@@ -128,10 +132,10 @@
                                    class="inbox-partner-item ${not empty activeUser and activeUser.userId == p.userId ? 'active' : ''}" 
                                    id="partnerItem_${p.userId}"
                                    data-user-id="${p.userId}"
-                                   data-username="${p.username.toLowerCase()}" 
-                                   data-fullname="${p.fullname.toLowerCase()}"
+                                   data-username="${p.username}" 
+                                   data-fullname="${p.fullname}"
                                    data-avatar="${p.avatar}"
-                                   onclick="switchChatPartner(${p.userId}, '${p.username}', '${p.fullname}', '${p.avatar}', event); return false;">
+                                   onclick="handleChatPartnerClick(this, event); return false;">
                                     <div class="inbox-avatar-wrap ${st.index == 4 ? 'has-story' : ''}">
                                         <img src="${p.avatar}" alt="${p.username}" class="inbox-avatar-img">
                                         <span class="online-indicator"></span>
@@ -395,6 +399,19 @@
             if (hName) hName.textContent = displayName;
             if (hSub) hSub.innerHTML = '@' + escapeHtml(username || '') + ' &bull; QNU_Confesstion';
             if (hLink) hLink.href = contextPath + '/profile/user/' + userId;
+        }
+
+        // Xử lý sự kiện click vào đối tác chat hoặc Story an toàn tuyệt đối, tránh lỗi cú pháp IDE
+        function handleChatPartnerClick(el, event) {
+            if (event && event.preventDefault) {
+                event.preventDefault();
+            }
+            if (!el) return;
+            const userId = parseInt(el.getAttribute('data-user-id'));
+            const username = el.getAttribute('data-username') || '';
+            const fullname = el.getAttribute('data-fullname') || '';
+            const avatar = el.getAttribute('data-avatar') || '';
+            switchChatPartner(userId, username, fullname, avatar, event);
         }
 
         // Chuyển đổi tab tin nhắn cực nhanh (Instant SPA Switch) KHÔNG HỀ TẢI LẠI TRANG
@@ -791,8 +808,8 @@
             const items = document.querySelectorAll('.inbox-partner-item');
             let hasLocalMatch = false;
             items.forEach(item => {
-                const username = item.getAttribute('data-username') || '';
-                const fullname = item.getAttribute('data-fullname') || '';
+                const username = (item.getAttribute('data-username') || '').toLowerCase();
+                const fullname = (item.getAttribute('data-fullname') || '').toLowerCase();
                 if (!q || username.includes(q) || fullname.includes(q)) {
                     item.style.display = 'flex';
                     hasLocalMatch = true;

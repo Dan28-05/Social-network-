@@ -1,5 +1,6 @@
 package vn.iotstar.services;
 
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vn.iotstar.entity.User;
@@ -14,7 +15,26 @@ public class UserService {
 	private UserRepository userRepository;
 
 	public Optional<User> login(String username, String password) {
-		return userRepository.findByUsernameAndPassword(username, password);
+		Optional<User> userOpt = userRepository.findByUsername(username);
+		if (userOpt.isPresent()) {
+			User user = userOpt.get();
+			String storedPassword = user.getPassword();
+			if (storedPassword != null) {
+				// Nếu mật khẩu đã được mã hóa BCrypt
+				if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+					if (BCrypt.checkpw(password, storedPassword)) {
+						return Optional.of(user);
+					}
+				}
+				// Hỗ trợ tương thích: Nếu tài khoản cũ lưu plain text, tự động nâng cấp sang BCrypt
+				else if (storedPassword.equals(password)) {
+					user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt(10)));
+					userRepository.save(user);
+					return Optional.of(user);
+				}
+			}
+		}
+		return Optional.empty();
 	}
 
 	public User register(String username, String password, String email, String fullname) {
@@ -24,7 +44,8 @@ public class UserService {
 		if (userRepository.existsByEmail(email)) {
 			throw new RuntimeException("Email đã được sử dụng!");
 		}
-		User user = new User(username, password, email, fullname);
+		String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(10));
+		User user = new User(username, hashedPassword, email, fullname);
 		return userRepository.save(user);
 	}
 
