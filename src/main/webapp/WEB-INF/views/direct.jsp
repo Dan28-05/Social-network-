@@ -30,6 +30,14 @@
             outline: none !important;
             -webkit-tap-highlight-color: transparent !important;
         }
+        #activeChatWrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .direct-hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="ig-dark-body">
@@ -187,7 +195,7 @@
             <!-- CỘT PHẢI: Khung chat tin nhắn (SPA Instant Switchable) -->
             <main class="direct-conversation-col">
                 <!-- Vùng Khung Chat Hoạt Động (Hiển thị khi có activeUser hoặc khi bấm chọn bất kỳ ai) -->
-                <div id="activeChatWrapper" style="${empty activeUser ? 'display: none;' : 'display: flex; flex-direction: column; height: 100%;'}">
+                <div id="activeChatWrapper" class="${empty activeUser ? 'direct-hidden' : ''}">
                     <!-- Topbar của người đang chat chuẩn Instagram (Avatar tròn 44px + Name + Handle + Call/Video/Info) -->
                     <div class="chat-topbar">
                         <div class="chat-partner-brief">
@@ -299,7 +307,7 @@
                 </div>
 
                 <!-- Trạng thái chưa chọn đối tác nào để chat -->
-                <div class="direct-empty-state" id="directEmptyState" style="${not empty activeUser ? 'display: none;' : ''}">
+                <div class="direct-empty-state ${not empty activeUser ? 'direct-hidden' : ''}" id="directEmptyState">
                     <div class="empty-icon-circle">
                         <i class="fa-regular fa-paper-plane"></i>
                     </div>
@@ -420,8 +428,14 @@
             // 3. Hiển thị khung chat và ẩn Empty state
             const chatWrapper = document.getElementById('activeChatWrapper');
             const emptyState = document.getElementById('directEmptyState');
-            if (chatWrapper) chatWrapper.style.display = 'flex';
-            if (emptyState) emptyState.style.display = 'none';
+            if (chatWrapper) {
+                chatWrapper.classList.remove('direct-hidden');
+                chatWrapper.style.display = 'flex';
+            }
+            if (emptyState) {
+                emptyState.classList.add('direct-hidden');
+                emptyState.style.display = 'none';
+            }
 
             // 4. Cập nhật ngay thông tin Header & Topbar (0ms)
             activeUserId = targetUserId;
@@ -969,6 +983,18 @@
                 } else {
                     switchChatPartner(parseInt(uId), '', '', '', null, true);
                 }
+            } else {
+                const chatWrapper = document.getElementById('activeChatWrapper');
+                const emptyState = document.getElementById('directEmptyState');
+                if (chatWrapper) {
+                    chatWrapper.classList.add('direct-hidden');
+                    chatWrapper.style.display = 'none';
+                }
+                if (emptyState) {
+                    emptyState.classList.remove('direct-hidden');
+                    emptyState.style.display = 'flex';
+                }
+                activeUserId = null;
             }
         });
 
