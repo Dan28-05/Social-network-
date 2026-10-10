@@ -16,6 +16,21 @@
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/templates/css/style.css?v=20261010_light_v1">
+    <style>
+        /* CSS chống chớp giật khi chuyển tab tin nhắn (Zero-Flicker Transition) */
+        .chat-messages-area {
+            transition: opacity 0.12s cubic-bezier(0.2, 0, 0, 1) !important;
+        }
+        .chat-messages-area.switching {
+            opacity: 0.75 !important;
+        }
+        .inbox-partner-item, .inbox-story-bubble {
+            cursor: pointer !important;
+            user-select: none !important;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+    </style>
 </head>
 <body class="ig-dark-body">
     <div class="direct-view-wrapper">
@@ -71,10 +86,10 @@
                         <c:set var="stories" value="${not empty storyUsers ? storyUsers : partners}" />
                         <c:forEach items="${stories}" var="su">
                             <c:if test="${su.userId != currentUser.userId}">
-                                <a href="${pageContext.request.contextPath}/direct?userId=${su.userId}" 
+                                <a href="javascript:void(0)" 
                                    class="inbox-story-bubble" 
                                    title="Trò chuyện với ${su.fullname} (@${su.username})"
-                                   onclick="switchChatPartner(${su.userId}, '${su.username}', '${su.fullname}', '${su.avatar}', event)">
+                                   onclick="switchChatPartner(${su.userId}, '${su.username}', '${su.fullname}', '${su.avatar}', event); return false;">
                                     <div class="inbox-story-avatar-wrap story-gradient">
                                         <img src="${su.avatar}" alt="${su.username}" class="inbox-story-img">
                                     </div>
@@ -101,14 +116,14 @@
                     <c:choose>
                         <c:when test="${not empty partners}">
                             <c:forEach items="${partners}" var="p" varStatus="st">
-                                <a href="${pageContext.request.contextPath}/direct?userId=${p.userId}" 
+                                <a href="javascript:void(0)" 
                                    class="inbox-partner-item ${not empty activeUser and activeUser.userId == p.userId ? 'active' : ''}" 
                                    id="partnerItem_${p.userId}"
                                    data-user-id="${p.userId}"
                                    data-username="${p.username.toLowerCase()}" 
                                    data-fullname="${p.fullname.toLowerCase()}"
                                    data-avatar="${p.avatar}"
-                                   onclick="switchChatPartner(${p.userId}, '${p.username}', '${p.fullname}', '${p.avatar}', event)">
+                                   onclick="switchChatPartner(${p.userId}, '${p.username}', '${p.fullname}', '${p.avatar}', event); return false;">
                                     <div class="inbox-avatar-wrap ${st.index == 4 ? 'has-story' : ''}">
                                         <img src="${p.avatar}" alt="${p.username}" class="inbox-avatar-img">
                                         <span class="online-indicator"></span>
@@ -414,13 +429,13 @@
             updateChatHeaderUI(targetUserId, username, fullname, activeUserAvatar);
 
             // 5. Kiểm tra Cache: Nếu đã có dữ liệu trong cache thì vẽ NGAY TỨC THÌ (0ms)!
-            if (conversationCache[targetUserId]) {
+            const hasCache = !!conversationCache[targetUserId];
+            if (hasCache) {
                 renderFullConversation(conversationCache[targetUserId]);
             } else {
-                // Hiển thị trạng thái tải nhẹ nhàng trong lúc fetch
-                const listEl = document.getElementById('chatMessagesList');
-                if (listEl) {
-                    listEl.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải tin nhắn...</div>';
+                // Không xóa trắng khung chat gây chớp giật, chỉ mờ nhẹ trong tích tắc
+                if (messagesArea) {
+                    messagesArea.classList.add('switching');
                 }
             }
 
@@ -429,8 +444,15 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && activeUserId === targetUserId) {
-                        conversationCache[targetUserId] = data.messages || [];
-                        renderFullConversation(data.messages || []);
+                        const newMsgs = data.messages || [];
+                        const oldMsgs = conversationCache[targetUserId];
+
+                        // NẾU ĐÃ CÓ CACHE VÀ SỐ LƯỢNG TIN NHẮN KHÔNG ĐỔI -> TUYỆT ĐỐI KHÔNG RE-RENDER ĐỂ TRÁNH CHỚP LẦN 2!
+                        if (!hasCache || !oldMsgs || oldMsgs.length !== newMsgs.length) {
+                            conversationCache[targetUserId] = newMsgs;
+                            renderFullConversation(newMsgs);
+                        }
+
                         if (data.targetUser) {
                             updateChatHeaderUI(data.targetUser.userId, data.targetUser.username, data.targetUser.fullname, data.targetUser.avatar);
                         }
@@ -438,11 +460,17 @@
                 })
                 .catch(err => {
                     console.error('[Direct Chat] Lỗi tải tin nhắn:', err);
+                })
+                .finally(() => {
+                    if (messagesArea) {
+                        messagesArea.classList.remove('switching');
+                    }
                 });
 
             if (chatInput) {
                 chatInput.focus();
             }
+            return false;
         }
 
         // Vẽ toàn bộ danh sách tin nhắn vào #chatMessagesList
