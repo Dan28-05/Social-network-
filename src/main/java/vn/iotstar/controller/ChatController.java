@@ -102,6 +102,17 @@ public class ChatController {
 			msgDtos.add(dto);
 		}
 
+		User target = userService.findById(targetUserId).orElse(null);
+		if (target != null) {
+			Map<String, Object> targetDto = new HashMap<>();
+			targetDto.put("userId", target.getUserId());
+			targetDto.put("username", target.getUsername());
+			targetDto.put("fullname", target.getFullname());
+			targetDto.put("avatar", target.getAvatar());
+			targetDto.put("bio", target.getBio());
+			res.put("targetUser", targetDto);
+		}
+
 		res.put("success", true);
 		res.put("messages", msgDtos);
 		return res;

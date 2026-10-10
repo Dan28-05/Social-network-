@@ -71,7 +71,10 @@
                         <c:set var="stories" value="${not empty storyUsers ? storyUsers : partners}" />
                         <c:forEach items="${stories}" var="su">
                             <c:if test="${su.userId != currentUser.userId}">
-                                <a href="${pageContext.request.contextPath}/direct?userId=${su.userId}" class="inbox-story-bubble" title="Trò chuyện với ${su.fullname} (@${su.username})">
+                                <a href="${pageContext.request.contextPath}/direct?userId=${su.userId}" 
+                                   class="inbox-story-bubble" 
+                                   title="Trò chuyện với ${su.fullname} (@${su.username})"
+                                   onclick="switchChatPartner(${su.userId}, '${su.username}', '${su.fullname}', '${su.avatar}', event)">
                                     <div class="inbox-story-avatar-wrap story-gradient">
                                         <img src="${su.avatar}" alt="${su.username}" class="inbox-story-img">
                                     </div>
@@ -100,9 +103,12 @@
                             <c:forEach items="${partners}" var="p" varStatus="st">
                                 <a href="${pageContext.request.contextPath}/direct?userId=${p.userId}" 
                                    class="inbox-partner-item ${not empty activeUser and activeUser.userId == p.userId ? 'active' : ''}" 
+                                   id="partnerItem_${p.userId}"
                                    data-user-id="${p.userId}"
                                    data-username="${p.username.toLowerCase()}" 
-                                   data-fullname="${p.fullname.toLowerCase()}">
+                                   data-fullname="${p.fullname.toLowerCase()}"
+                                   data-avatar="${p.avatar}"
+                                   onclick="switchChatPartner(${p.userId}, '${p.username}', '${p.fullname}', '${p.avatar}', event)">
                                     <div class="inbox-avatar-wrap ${st.index == 4 ? 'has-story' : ''}">
                                         <img src="${p.avatar}" alt="${p.username}" class="inbox-avatar-img">
                                         <span class="online-indicator"></span>
@@ -163,44 +169,45 @@
                 </div>
             </aside>
 
-            <!-- CỘT PHẢI: Khung chat tin nhắn -->
+            <!-- CỘT PHẢI: Khung chat tin nhắn (SPA Instant Switchable) -->
             <main class="direct-conversation-col">
-                <c:choose>
-                    <c:when test="${not empty activeUser}">
-                        <!-- Topbar của người đang chat chuẩn Instagram (Avatar tròn 44px + Name + Handle + Call/Video/Info) -->
-                        <div class="chat-topbar">
-                            <div class="chat-partner-brief">
-                                <img src="${activeUser.avatar}" alt="${activeUser.username}" class="chat-topbar-avatar">
-                                <div class="chat-topbar-meta">
-                                    <span class="chat-topbar-name">${activeUser.fullname}</span>
-                                    <span class="chat-topbar-handle">_${activeUser.username}</span>
-                                </div>
-                            </div>
-
-                            <div class="chat-topbar-actions">
-                                <a href="javascript:void(0)" onclick="handleVoiceCall()" title="Bắt đầu gọi thoại">
-                                    <i class="fa-solid fa-phone"></i>
-                                </a>
-                                <a href="javascript:void(0)" onclick="handleVideoCall()" title="Bắt đầu gọi video">
-                                    <i class="fa-solid fa-video"></i>
-                                </a>
-                                <a href="${pageContext.request.contextPath}/profile/user/${activeUser.userId}" title="Thông tin chi tiết">
-                                    <i class="fa-solid fa-circle-info"></i>
-                                </a>
+                <!-- Vùng Khung Chat Hoạt Động (Hiển thị khi có activeUser hoặc khi bấm chọn bất kỳ ai) -->
+                <div id="activeChatWrapper" style="${empty activeUser ? 'display: none;' : 'display: flex; flex-direction: column; height: 100%;'}">
+                    <!-- Topbar của người đang chat chuẩn Instagram (Avatar tròn 44px + Name + Handle + Call/Video/Info) -->
+                    <div class="chat-topbar">
+                        <div class="chat-partner-brief">
+                            <img src="${not empty activeUser ? activeUser.avatar : ''}" alt="" class="chat-topbar-avatar" id="chatTopbarAvatar">
+                            <div class="chat-topbar-meta">
+                                <span class="chat-topbar-name" id="chatTopbarName">${not empty activeUser ? activeUser.fullname : ''}</span>
+                                <span class="chat-topbar-handle" id="chatTopbarHandle">_${not empty activeUser ? activeUser.username : ''}</span>
                             </div>
                         </div>
 
-                        <!-- Vùng nội dung các tin nhắn (Scrollable) -->
-                        <div class="chat-messages-area" id="chatMessagesArea">
-                            <!-- Header thông tin đối tác ở đỉnh khung tin nhắn (Avatar tròn chuẩn 96px) -->
-                            <div class="chat-header-profile-box">
-                                <img src="${activeUser.avatar}" alt="${activeUser.username}" class="chat-header-avatar-lg">
-                                <div class="chat-header-name">${activeUser.fullname}</div>
-                                <div class="chat-header-sub">@${activeUser.username} &bull; QNU_Confesstion</div>
-                                <a href="${pageContext.request.contextPath}/profile/user/${activeUser.userId}" class="btn-view-profile-sm">Xem trang cá nhân</a>
-                            </div>
+                        <div class="chat-topbar-actions">
+                            <a href="javascript:void(0)" onclick="handleVoiceCall()" title="Bắt đầu gọi thoại">
+                                <i class="fa-solid fa-phone"></i>
+                            </a>
+                            <a href="javascript:void(0)" onclick="handleVideoCall()" title="Bắt đầu gọi video">
+                                <i class="fa-solid fa-video"></i>
+                            </a>
+                            <a href="${pageContext.request.contextPath}/profile/user/${not empty activeUser ? activeUser.userId : ''}" id="chatTopbarInfoLink" title="Thông tin chi tiết">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </a>
+                        </div>
+                    </div>
 
-                            <!-- Lịch sử tin nhắn được nạp từ Server Database -->
+                    <!-- Vùng nội dung các tin nhắn (Scrollable) -->
+                    <div class="chat-messages-area" id="chatMessagesArea">
+                        <!-- Header thông tin đối tác ở đỉnh khung tin nhắn (Avatar tròn chuẩn 96px) -->
+                        <div class="chat-header-profile-box">
+                            <img src="${not empty activeUser ? activeUser.avatar : ''}" alt="" class="chat-header-avatar-lg" id="chatHeaderAvatarLg">
+                            <div class="chat-header-name" id="chatHeaderName">${not empty activeUser ? activeUser.fullname : ''}</div>
+                            <div class="chat-header-sub" id="chatHeaderSub">@${not empty activeUser ? activeUser.username : ''} &bull; QNU_Confesstion</div>
+                            <a href="${pageContext.request.contextPath}/profile/user/${not empty activeUser ? activeUser.userId : ''}" id="chatHeaderProfileLink" class="btn-view-profile-sm">Xem trang cá nhân</a>
+                        </div>
+
+                        <!-- Danh sách tin nhắn động -->
+                        <div id="chatMessagesList">
                             <c:forEach items="${conversation}" var="msg" varStatus="st">
                                 <c:set var="isSelf" value="${msg.sender.userId == currentUser.userId}" />
                                 <c:if test="${st.index == 0 || st.index % 5 == 0}">
@@ -216,77 +223,75 @@
                                 </div>
                             </c:forEach>
                         </div>
+                    </div>
 
-                        <!-- Form ib chuẩn Instagram (The exact Instagram Direct input bar) -->
-                        <div class="chat-bottom-input-wrap">
-                            <!-- Popover Bảng Emoji nhanh khi bấm vào icon 😊 -->
-                            <div id="chatEmojiPicker" class="chat-emoji-popover" style="display: none;">
-                                <div class="emoji-popover-grid">
-                                    <span class="emoji-cell" onclick="selectEmoji('❤️')">❤️</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('😂')">😂</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('🔥')">🔥</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('😍')">😍</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('🙃')">🙃</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('👏')">👏</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('👍')">👍</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('🎉')">🎉</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('✨')">✨</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('🥺')">🥺</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('🥰')">🥰</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('💯')">💯</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('😎')">😎</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('😮')">😮</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('😢')">😢</span>
-                                    <span class="emoji-cell" onclick="selectEmoji('🙏')">🙏</span>
-                                </div>
+                    <!-- Form ib chuẩn Instagram (The exact Instagram Direct input bar) -->
+                    <div class="chat-bottom-input-wrap">
+                        <!-- Popover Bảng Emoji nhanh khi bấm vào icon 😊 -->
+                        <div id="chatEmojiPicker" class="chat-emoji-popover" style="display: none;">
+                            <div class="emoji-popover-grid">
+                                <span class="emoji-cell" onclick="selectEmoji('❤️')">❤️</span>
+                                <span class="emoji-cell" onclick="selectEmoji('😂')">😂</span>
+                                <span class="emoji-cell" onclick="selectEmoji('🔥')">🔥</span>
+                                <span class="emoji-cell" onclick="selectEmoji('😍')">😍</span>
+                                <span class="emoji-cell" onclick="selectEmoji('🙃')">🙃</span>
+                                <span class="emoji-cell" onclick="selectEmoji('👏')">👏</span>
+                                <span class="emoji-cell" onclick="selectEmoji('👍')">👍</span>
+                                <span class="emoji-cell" onclick="selectEmoji('🎉')">🎉</span>
+                                <span class="emoji-cell" onclick="selectEmoji('✨')">✨</span>
+                                <span class="emoji-cell" onclick="selectEmoji('🥺')">🥺</span>
+                                <span class="emoji-cell" onclick="selectEmoji('🥰')">🥰</span>
+                                <span class="emoji-cell" onclick="selectEmoji('💯')">💯</span>
+                                <span class="emoji-cell" onclick="selectEmoji('😎')">😎</span>
+                                <span class="emoji-cell" onclick="selectEmoji('😮')">😮</span>
+                                <span class="emoji-cell" onclick="selectEmoji('😢')">😢</span>
+                                <span class="emoji-cell" onclick="selectEmoji('🙏')">🙏</span>
                             </div>
+                        </div>
 
-                            <form id="chatForm" onsubmit="handleSendChat(event)" class="chat-input-pill">
-                                <!-- Nút Mặt cười 😊 -->
-                                <button type="button" class="chat-pill-icon-btn chat-emoji-btn" onclick="toggleEmojiPicker(event)" title="Thêm biểu cảm">
-                                    <i class="fa-regular fa-face-smile"></i>
-                                </button>
+                        <form id="chatForm" onsubmit="handleSendChat(event)" class="chat-input-pill">
+                            <!-- Nút Mặt cười 😊 -->
+                            <button type="button" class="chat-pill-icon-btn chat-emoji-btn" onclick="toggleEmojiPicker(event)" title="Thêm biểu cảm">
+                                <i class="fa-regular fa-face-smile"></i>
+                            </button>
 
-                                <!-- Ô nhập tin nhắn: Placeholder 'Message...' chuẩn ảnh -->
-                                <input type="text" 
-                                       id="chatInput" 
-                                       class="chat-pill-text-input" 
-                                       placeholder="Message..." 
-                                       autocomplete="off" 
-                                       oninput="handleChatInputChange(this)">
+                            <!-- Ô nhập tin nhắn: Placeholder 'Message...' chuẩn ảnh -->
+                            <input type="text" 
+                                   id="chatInput" 
+                                   class="chat-pill-text-input" 
+                                   placeholder="Message..." 
+                                   autocomplete="off" 
+                                   oninput="handleChatInputChange(this)">
 
-                                <!-- Cụm nút bên phải: Mặc định hiện Mic, Ảnh, Tim; Khi gõ chữ chuyển sang 'Gửi' -->
-                                <div class="chat-pill-actions-right">
-                                    <div class="chat-default-actions" id="chatDefaultActions">
-                                        <button type="button" class="chat-pill-icon-btn" onclick="handleVoiceNote()" title="Ghi âm">
-                                            <i class="fa-solid fa-microphone"></i>
-                                        </button>
-                                        <button type="button" class="chat-pill-icon-btn" onclick="triggerImageUpload()" title="Gửi ảnh">
-                                            <i class="fa-regular fa-image"></i>
-                                        </button>
-                                        <input type="file" id="chatImageInput" accept="image/*" style="display: none;" onchange="handleSendImageFile(this)">
-                                        <button type="button" class="chat-pill-icon-btn chat-heart-btn" onclick="sendQuickHeart()" title="Gửi tim">
-                                            <i class="fa-regular fa-heart"></i>
-                                        </button>
-                                    </div>
-                                    <button type="submit" class="btn-chat-send-text" id="btnSend" style="display: none;">Gửi</button>
+                            <!-- Cụm nút bên phải: Mặc định hiện Mic, Ảnh, Tim; Khi gõ chữ chuyển sang 'Gửi' -->
+                            <div class="chat-pill-actions-right">
+                                <div class="chat-default-actions" id="chatDefaultActions">
+                                    <button type="button" class="chat-pill-icon-btn" onclick="handleVoiceNote()" title="Ghi âm">
+                                        <i class="fa-solid fa-microphone"></i>
+                                    </button>
+                                    <button type="button" class="chat-pill-icon-btn" onclick="triggerImageUpload()" title="Gửi ảnh">
+                                        <i class="fa-regular fa-image"></i>
+                                    </button>
+                                    <input type="file" id="chatImageInput" accept="image/*" style="display: none;" onchange="handleSendImageFile(this)">
+                                    <button type="button" class="chat-pill-icon-btn chat-heart-btn" onclick="sendQuickHeart()" title="Gửi tim">
+                                        <i class="fa-regular fa-heart"></i>
+                                    </button>
                                 </div>
-                            </form>
-                        </div>
-                    </c:when>
-
-                    <c:otherwise>
-                        <!-- Trạng thái chưa chọn đối tác nào để chat -->
-                        <div class="direct-empty-state">
-                            <div class="empty-icon-circle">
-                                <i class="fa-regular fa-paper-plane"></i>
+                                <button type="submit" class="btn-chat-send-text" id="btnSend" style="display: none;">Gửi</button>
                             </div>
-                            <h3 class="empty-title">Tin nhắn của bạn</h3>
-                            <p class="empty-desc">Gửi ảnh và tin nhắn riêng tư cho bạn bè hoặc người trong trường QNU.</p>
-                            <button class="btn-dark-primary-pill" onclick="openNewMsgModal()">Gửi tin nhắn</button>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Trạng thái chưa chọn đối tác nào để chat -->
+                <div class="direct-empty-state" id="directEmptyState" style="${not empty activeUser ? 'display: none;' : ''}">
+                    <div class="empty-icon-circle">
+                        <i class="fa-regular fa-paper-plane"></i>
+                    </div>
+                    <h3 class="empty-title">Tin nhắn của bạn</h3>
+                    <p class="empty-desc">Gửi ảnh và tin nhắn riêng tư cho bạn bè hoặc người trong trường QNU.</p>
+                    <button class="btn-dark-primary-pill" onclick="openNewMsgModal()">Gửi tin nhắn</button>
+                </div>
             </main>
         </div>
     </div>
@@ -328,15 +333,151 @@
     <script>
         const chatConfig = document.getElementById('chatConfig');
         const currentUserId = chatConfig && chatConfig.dataset.currentUserId ? parseInt(chatConfig.dataset.currentUserId) : null;
-        const activeUserId = chatConfig && chatConfig.dataset.activeUserId ? parseInt(chatConfig.dataset.activeUserId) : null;
-        const activeUserAvatar = chatConfig && chatConfig.dataset.activeUserAvatar ? chatConfig.dataset.activeUserAvatar : '';
+        let activeUserId = chatConfig && chatConfig.dataset.activeUserId ? parseInt(chatConfig.dataset.activeUserId) : null;
+        let activeUserAvatar = chatConfig && chatConfig.dataset.activeUserAvatar ? chatConfig.dataset.activeUserAvatar : '';
         const contextPath = chatConfig && chatConfig.dataset.contextPath ? chatConfig.dataset.contextPath : '';
+
+        // Bộ nhớ đệm tin nhắn cục bộ (Instant Cache) giúp chuyển đổi tab tức thì trong 0ms giống Instagram
+        const conversationCache = {};
+        const renderedMessageIds = new Set();
 
         let chatSocket = null;
         const messagesArea = document.getElementById('chatMessagesArea');
         const chatInput = document.getElementById('chatInput');
         const wsStatusDot = document.getElementById('wsStatusDot');
         const wsStatusText = document.getElementById('wsStatusText');
+
+        // Cập nhật giao diện header và topbar của cuộc hội thoại
+        function updateChatHeaderUI(userId, username, fullname, avatar) {
+            const avatarSrc = avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+            const displayName = fullname || username || 'Người dùng';
+            const handleName = username ? ('_' + username) : '';
+
+            const tbAvatar = document.getElementById('chatTopbarAvatar');
+            const tbName = document.getElementById('chatTopbarName');
+            const tbHandle = document.getElementById('chatTopbarHandle');
+            const tbLink = document.getElementById('chatTopbarInfoLink');
+
+            const hAvatar = document.getElementById('chatHeaderAvatarLg');
+            const hName = document.getElementById('chatHeaderName');
+            const hSub = document.getElementById('chatHeaderSub');
+            const hLink = document.getElementById('chatHeaderProfileLink');
+
+            if (tbAvatar) tbAvatar.src = avatarSrc;
+            if (tbName) tbName.textContent = displayName;
+            if (tbHandle) tbHandle.textContent = handleName;
+            if (tbLink) tbLink.href = contextPath + '/profile/user/' + userId;
+
+            if (hAvatar) hAvatar.src = avatarSrc;
+            if (hName) hName.textContent = displayName;
+            if (hSub) hSub.innerHTML = '@' + escapeHtml(username || '') + ' &bull; QNU_Confesstion';
+            if (hLink) hLink.href = contextPath + '/profile/user/' + userId;
+        }
+
+        // Chuyển đổi tab tin nhắn cực nhanh (Instant SPA Switch) KHÔNG HỀ TẢI LẠI TRANG
+        function switchChatPartner(targetUserId, username, fullname, avatar, event, isPopState) {
+            if (event && event.preventDefault) {
+                event.preventDefault();
+            }
+
+            if (!targetUserId) return;
+            if (!isPopState && targetUserId === activeUserId) return; // Đang mở đúng người này
+
+            // Đóng Modal Soạn tin nhắn mới nếu đang mở
+            const newMsgModal = document.getElementById('newMsgModal');
+            if (newMsgModal) newMsgModal.classList.remove('show');
+
+            // 1. Cập nhật URL trên thanh địa chỉ mà không tải lại trang
+            if (!isPopState) {
+                const newUrl = contextPath + '/direct?userId=' + targetUserId;
+                window.history.pushState({ userId: targetUserId }, '', newUrl);
+            }
+
+            // 2. Chuyển class active trên cột đối tác bên trái
+            document.querySelectorAll('.inbox-partner-item').forEach(el => el.classList.remove('active'));
+            const currentItem = document.querySelector('.inbox-partner-item[data-user-id="' + targetUserId + '"]');
+            if (currentItem) {
+                currentItem.classList.add('active');
+                const unreadDot = currentItem.querySelector('.unread-dot');
+                if (unreadDot) unreadDot.remove();
+            }
+
+            // 3. Hiển thị khung chat và ẩn Empty state
+            const chatWrapper = document.getElementById('activeChatWrapper');
+            const emptyState = document.getElementById('directEmptyState');
+            if (chatWrapper) chatWrapper.style.display = 'flex';
+            if (emptyState) emptyState.style.display = 'none';
+
+            // 4. Cập nhật ngay thông tin Header & Topbar (0ms)
+            activeUserId = targetUserId;
+            activeUserAvatar = avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+            updateChatHeaderUI(targetUserId, username, fullname, activeUserAvatar);
+
+            // 5. Kiểm tra Cache: Nếu đã có dữ liệu trong cache thì vẽ NGAY TỨC THÌ (0ms)!
+            if (conversationCache[targetUserId]) {
+                renderFullConversation(conversationCache[targetUserId]);
+            } else {
+                // Hiển thị trạng thái tải nhẹ nhàng trong lúc fetch
+                const listEl = document.getElementById('chatMessagesList');
+                if (listEl) {
+                    listEl.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải tin nhắn...</div>';
+                }
+            }
+
+            // 6. Gửi API JSON siêu nhẹ (chỉ mất ~5-15ms) để lấy dữ liệu mới nhất
+            fetch(contextPath + '/direct/api/conversation/' + targetUserId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && activeUserId === targetUserId) {
+                        conversationCache[targetUserId] = data.messages || [];
+                        renderFullConversation(data.messages || []);
+                        if (data.targetUser) {
+                            updateChatHeaderUI(data.targetUser.userId, data.targetUser.username, data.targetUser.fullname, data.targetUser.avatar);
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('[Direct Chat] Lỗi tải tin nhắn:', err);
+                });
+
+            if (chatInput) {
+                chatInput.focus();
+            }
+        }
+
+        // Vẽ toàn bộ danh sách tin nhắn vào #chatMessagesList
+        function renderFullConversation(messages) {
+            const listEl = document.getElementById('chatMessagesList');
+            if (!listEl) return;
+
+            let html = '';
+            if (messages && messages.length > 0) {
+                messages.forEach((msg, idx) => {
+                    const isSelf = (msg.senderId === currentUserId);
+                    if (idx === 0 || idx % 5 === 0) {
+                        html += '<div class="chat-date-divider">' + escapeHtml(msg.createdAt || '') + '</div>';
+                    }
+                    html += '<div class="msg-row ' + (isSelf ? 'self' : 'other') + '">';
+                    if (!isSelf) {
+                        const av = msg.senderAvatar || activeUserAvatar;
+                        html += '<img src="' + escapeHtml(av) + '" alt="' + escapeHtml(msg.senderUsername || '') + '" class="msg-avatar-sm" title="' + escapeHtml(msg.senderUsername || '') + '">';
+                    }
+                    html += '<div class="msg-bubble ' + (isSelf ? 'self' : 'other') + '">' + escapeHtml(msg.content) + '</div>';
+                    html += '</div>';
+
+                    if (msg.messageId) {
+                        renderedMessageIds.add(msg.messageId);
+                    }
+                });
+            } else {
+                html = '<div style="text-align: center; padding: 50px 20px; color: var(--text-secondary); font-size: 13px;">' +
+                       '<i class="fa-regular fa-paper-plane" style="font-size: 28px; margin-bottom: 10px; display: block; opacity: 0.5;"></i>' +
+                       'Chưa có tin nhắn nào.<br>Hãy gửi lời chào đầu tiên để bắt đầu cuộc trò chuyện!</div>';
+            }
+
+            listEl.innerHTML = html;
+            scrollToBottom();
+        }
 
         // Khởi tạo kết nối WebSocket với Spring WebSocket Handler
         function initWebSocket() {
@@ -378,8 +519,6 @@
             };
         }
 
-        const renderedMessageIds = new Set();
-
         // Xử lý hiển thị tin nhắn mới nhận hoặc vừa gửi ngay lập tức (Realtime)
         function renderIncomingMessage(data) {
             if (!data || !data.content) return;
@@ -390,36 +529,48 @@
                 renderedMessageIds.add(data.messageId);
             }
 
+            // Lưu vào Cache của cuộc hội thoại tương ứng
+            const partnerId = (data.senderId === currentUserId) ? data.receiverId : data.senderId;
+            if (partnerId) {
+                if (!conversationCache[partnerId]) {
+                    conversationCache[partnerId] = [];
+                }
+                conversationCache[partnerId].push(data);
+            }
+
             // Kiểm tra xem tin nhắn có thuộc cuộc hội thoại đang mở không
             const isRelevant = activeUserId && 
                 ((data.senderId === activeUserId && data.receiverId === currentUserId) ||
                  (data.senderId === currentUserId && data.receiverId === activeUserId));
 
-            if (isRelevant && messagesArea) {
-                const isSelf = (data.senderId === currentUserId);
-                const msgRow = document.createElement('div');
-                msgRow.className = 'msg-row ' + (isSelf ? 'self' : 'other');
+            if (isRelevant) {
+                const listEl = document.getElementById('chatMessagesList');
+                if (listEl) {
+                    const isSelf = (data.senderId === currentUserId);
+                    const msgRow = document.createElement('div');
+                    msgRow.className = 'msg-row ' + (isSelf ? 'self' : 'other');
 
-                let avatarHtml = '';
-                if (!isSelf) {
-                    const avatarSrc = data.senderAvatar || activeUserAvatar;
-                    avatarHtml = '<img src="' + escapeHtml(avatarSrc) + '" class="msg-avatar-sm" alt="Avatar">';
+                    let avatarHtml = '';
+                    if (!isSelf) {
+                        const avatarSrc = data.senderAvatar || activeUserAvatar;
+                        avatarHtml = '<img src="' + escapeHtml(avatarSrc) + '" class="msg-avatar-sm" alt="Avatar">';
+                    }
+
+                    const contentHtml = '<div class="msg-bubble ' + (isSelf ? 'self' : 'other') + '">' + escapeHtml(data.content) + '</div>';
+
+                    msgRow.innerHTML = avatarHtml + contentHtml;
+                    listEl.appendChild(msgRow);
+
+                    // Cuộn xuống tin nhắn mới nhất
+                    scrollToBottom();
                 }
-
-                const contentHtml = '<div class="msg-bubble ' + (isSelf ? 'self' : 'other') + '">' + escapeHtml(data.content) + '</div>';
-
-                msgRow.innerHTML = avatarHtml + contentHtml;
-                messagesArea.appendChild(msgRow);
-
-                // Cuộn xuống tin nhắn mới nhất
-                scrollToBottom();
 
                 // Cập nhật dòng preview tin nhắn bên danh sách đối tác chat bên trái
                 const partnerItem = document.querySelector('.inbox-partner-item[data-user-id="' + activeUserId + '"]');
                 if (partnerItem) {
                     const statusEl = partnerItem.querySelector('.inbox-partner-status');
                     if (statusEl) {
-                        statusEl.textContent = (isSelf ? 'Bạn: ' : '') + data.content;
+                        statusEl.textContent = ((data.senderId === currentUserId) ? 'Bạn: ' : '') + data.content;
                     }
                 }
             } else if (data.senderId !== currentUserId) {
@@ -624,7 +775,10 @@
                             let html = '';
                             data.users.forEach(u => {
                                 if (u.userId !== currentUserId) {
-                                    html += '<a href="' + contextPath + '/direct?userId=' + u.userId + '" class="inbox-partner-item">' +
+                                    const uName = escapeJsString(u.username);
+                                    const fName = escapeJsString(u.fullname || u.username);
+                                    const avt = escapeJsString(u.avatar || '');
+                                    html += '<a href="' + contextPath + '/direct?userId=' + u.userId + '" class="inbox-partner-item" onclick="switchChatPartner(' + u.userId + ', \'' + uName + '\', \'' + fName + '\', \'' + avt + '\', event)">' +
                                                 '<div class="inbox-avatar-wrap">' +
                                                     '<img src="' + escapeHtml(u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150') + '" class="inbox-avatar-img">' +
                                                 '</div>' +
@@ -697,7 +851,10 @@
                             let html = '';
                             data.users.forEach(u => {
                                 if (u.userId !== currentUserId) {
-                                    html += '<a href="' + contextPath + '/direct?userId=' + u.userId + '" class="search-user-card">' +
+                                    const uName = escapeJsString(u.username);
+                                    const fName = escapeJsString(u.fullname || u.username);
+                                    const avt = escapeJsString(u.avatar || '');
+                                    html += '<a href="' + contextPath + '/direct?userId=' + u.userId + '" class="search-user-card" onclick="switchChatPartner(' + u.userId + ', \'' + uName + '\', \'' + fName + '\', \'' + avt + '\', event)">' +
                                                 '<img src="' + escapeHtml(u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150') + '" class="search-user-avatar">' +
                                                 '<div class="search-user-info">' +
                                                     '<span class="search-user-handle">' + escapeHtml(u.username) + '</span>' +
@@ -765,10 +922,56 @@
             return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
+        function escapeJsString(str) {
+            if (!str) return '';
+            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // Lắng nghe sự kiện Back/Forward của trình duyệt để chuyển tab tức thì
+        window.addEventListener('popstate', function(e) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const uId = urlParams.get('userId');
+            if (uId) {
+                const item = document.querySelector('.inbox-partner-item[data-user-id="' + uId + '"]');
+                if (item) {
+                    const username = item.getAttribute('data-username') || '';
+                    const fullname = item.getAttribute('data-fullname') || '';
+                    const avatar = item.getAttribute('data-avatar') || '';
+                    switchChatPartner(parseInt(uId), username, fullname, avatar, null, true);
+                } else {
+                    switchChatPartner(parseInt(uId), '', '', '', null, true);
+                }
+            }
+        });
+
         // Tự động khởi chạy khi tải trang
         document.addEventListener('DOMContentLoaded', function () {
             scrollToBottom();
             initWebSocket();
+
+            // Lưu cache cuộc hội thoại ban đầu
+            if (activeUserId) {
+                const initialMsgs = [];
+                const rows = document.querySelectorAll('#chatMessagesList .msg-row');
+                rows.forEach(r => {
+                    const isSelf = r.classList.contains('self');
+                    const bubble = r.querySelector('.msg-bubble');
+                    const content = bubble ? bubble.textContent : '';
+                    if (content) {
+                        initialMsgs.push({
+                            senderId: isSelf ? currentUserId : activeUserId,
+                            receiverId: isSelf ? activeUserId : currentUserId,
+                            content: content,
+                            senderAvatar: isSelf ? '' : activeUserAvatar,
+                            createdAt: ''
+                        });
+                    }
+                });
+                if (initialMsgs.length > 0) {
+                    conversationCache[activeUserId] = initialMsgs;
+                }
+            }
+
             if (chatInput) {
                 chatInput.focus();
             }
