@@ -2855,19 +2855,19 @@ input, textarea {
 .ig-search-drawer {
     position: fixed;
     top: 0;
-    left: 244px;
+    left: 270px;
     width: 397px;
     height: 100vh;
     background-color: #ffffff;
-    border-right: 1px solid #dbdbdb;
+    border-right: 1px solid #efefef;
     border-top-right-radius: 16px;
     border-bottom-right-radius: 16px;
-    z-index: 1050;
+    z-index: 1010;
     transform: translateX(-100%);
     opacity: 0;
     visibility: hidden;
-    transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.2s ease, visibility 0.3s;
-    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.7);
+    transition: transform 0.32s cubic-bezier(0.12, 0.9, 0.24, 1), opacity 0.2s ease, visibility 0.3s;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
 }
@@ -2884,9 +2884,10 @@ input, textarea {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(2px);
-    z-index: 1040;
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 1000;
     display: none;
 }
 

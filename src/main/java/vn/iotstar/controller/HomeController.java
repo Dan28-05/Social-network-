@@ -351,22 +351,48 @@ public class HomeController {
 		return "redirect:" + redirectUrl;
 	}
 
-	// Chức năng: Tìm kiếm người dùng bằng Ajax
+	// Chức năng: Tìm kiếm người dùng bằng Ajax (kèm gợi ý khi chưa nhập từ khóa)
 	@GetMapping(value = "/api/users/search", produces = "application/json;charset=UTF-8")
 	@ResponseBody
-	public java.util.Map<String, Object> searchUsers(@RequestParam(value = "q", required = false) String query) {
+	public java.util.Map<String, Object> searchUsers(
+			@RequestParam(value = "q", required = false) String query,
+			HttpSession session) {
 		java.util.Map<String, Object> res = new java.util.HashMap<>();
-		java.util.List<User> users = userService.searchUsers(query);
+		User currentUser = (User) session.getAttribute("currentUser");
+		Integer currentUserId = currentUser != null ? currentUser.getUserId() : null;
+
+		java.util.List<User> users;
+		boolean isSuggested = false;
+		if (query == null || query.trim().isEmpty()) {
+			// Khi chưa gõ từ khóa: Trả về danh sách sinh viên gợi ý trong hệ thống
+			users = userService.getAllOtherUsers(currentUserId);
+			if (users != null && users.size() > 8) {
+				users = users.subList(0, 8);
+			}
+			isSuggested = true;
+		} else {
+			users = userService.searchUsers(query.trim());
+			if (currentUserId != null && users != null) {
+				users = users.stream()
+						.filter(u -> !u.getUserId().equals(currentUserId))
+						.collect(java.util.stream.Collectors.toList());
+			}
+		}
+
 		java.util.List<java.util.Map<String, Object>> dtos = new java.util.ArrayList<>();
-		for (User u : users) {
-			java.util.Map<String, Object> dto = new java.util.HashMap<>();
-			dto.put("userId", u.getUserId());
-			dto.put("username", u.getUsername());
-			dto.put("fullname", u.getFullname());
-			dto.put("avatar", u.getAvatar());
-			dtos.add(dto);
+		if (users != null) {
+			for (User u : users) {
+				java.util.Map<String, Object> dto = new java.util.HashMap<>();
+				dto.put("userId", u.getUserId());
+				dto.put("username", u.getUsername());
+				dto.put("fullname", u.getFullname());
+				dto.put("avatar", u.getAvatar());
+				dto.put("bio", u.getBio());
+				dtos.add(dto);
+			}
 		}
 		res.put("success", true);
+		res.put("isSuggested", isSuggested);
 		res.put("users", dtos);
 		return res;
 	}
