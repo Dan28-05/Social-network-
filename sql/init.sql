@@ -111,29 +111,30 @@ END
 GO
 
 -- 8. Dữ liệu mẫu (Insert sample data nếu chưa có)
+-- Mật khẩu mẫu mặc định cho tất cả user: 123456 (Đã mã hóa bằng BCrypt hash)
 IF NOT EXISTS (SELECT * FROM Users WHERE username = 'nguyenvana')
 BEGIN
     INSERT INTO Users (username, password, email, fullname, avatar, bio)
     VALUES 
-    ('nguyenvana', '123456', 'vana@gmail.com', N'Nguyễn Văn A', 
+    ('nguyenvana', '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da', 'vana@gmail.com', N'Nguyễn Văn A', 
      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 
      N'Lập trình viên Java Web Spring MVC ☕ | Yêu nhiếp ảnh 📸'),
-    ('thuhalee', '123456', 'thuha@gmail.com', N'Lê Thị Thu Hà', 
+    ('thuhalee', '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da', 'thuha@gmail.com', N'Lê Thị Thu Hà', 
      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 
      N'Designer & Traveler ✈️ | Sống tích cực mỗi ngày 🌿'),
-    ('alligator.aixuann', '123456', 'aixuan@gmail.com', N'Ái Xuân', 
+    ('alligator.aixuann', '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da', 'aixuan@gmail.com', N'Ái Xuân', 
      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 
      N'Design & Content Creator 🎨 ✨'),
-    ('ngonhuy', '123456', 'nhuy@gmail.com', N'Ngô Như Ý', 
+    ('ngonhuy', '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da', 'nhuy@gmail.com', N'Ngô Như Ý', 
      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150', 
      N'Photography & Travel 📸 Sống để trải nghiệm 🌿'),
-    ('lamnhattien', '123456', 'nhattien@gmail.com', N'Lâm Nhật Tiến', 
+    ('lamnhattien', '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da', 'nhattien@gmail.com', N'Lâm Nhật Tiến', 
      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 
      N'Software Engineer 💻 Coffee & Coding ☕'),
-    ('hongthuong', '123456', 'hongthuong@gmail.com', N'Hồng Thương', 
+    ('hongthuong', '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da', 'hongthuong@gmail.com', N'Hồng Thương', 
      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150', 
      N'Lifestyle & Foodie 🍜 🌸'),
-    ('trangnguyen', '123456', 'trangnguyen@gmail.com', N'Nguyễn Thị Thu Trang', 
+    ('trangnguyen', '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da', 'trangnguyen@gmail.com', N'Nguyễn Thị Thu Trang', 
      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', 
      N'UI/UX Enthusiast 💡 Minimalist 🍃');
 
@@ -151,5 +152,14 @@ BEGIN
      N'Thung lũng mùa hoa nở rộ 🌸 Trở về với thiên nhiên', DATEADD(HOUR, -4, GETDATE())),
     (5, 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800', 
      N'Setup bàn làm việc mới cho dự án Spring MVC 🚀 #workspace #developer', DATEADD(HOUR, -8, GETDATE()));
+END
+GO
+
+-- 9. Tự động cập nhật mật khẩu mẫu cũ '123456' sang BCrypt hash nếu database đã có sẵn dữ liệu trước đó
+IF EXISTS (SELECT * FROM Users WHERE password = '123456')
+BEGIN
+    UPDATE Users 
+    SET password = '$2a$10$ylqxzrlAmXbp7G1pZfm.ueuNy4t/djCum51MJMN.yrZzJsXBHf3Da' 
+    WHERE password = '123456';
 END
 GO
