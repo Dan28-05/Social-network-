@@ -106,4 +106,39 @@ public class ChatController {
 		res.put("messages", msgDtos);
 		return res;
 	}
+
+	// API gửi tin nhắn dự phòng qua AJAX HTTP (đảm bảo tin nhắn gửi được và hiển thị tức thì cả khi mất WebSocket)
+	@PostMapping("/api/send")
+	@ResponseBody
+	public Map<String, Object> sendMessageAjax(@RequestParam("receiverId") Integer receiverId,
+											   @RequestParam("content") String content,
+											   HttpSession session) {
+		Map<String, Object> res = new HashMap<>();
+		User currentUser = (User) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			res.put("success", false);
+			res.put("message", "Chưa đăng nhập");
+			return res;
+		}
+
+		if (receiverId == null || content == null || content.trim().isEmpty()) {
+			res.put("success", false);
+			res.put("message", "Dữ liệu không hợp lệ");
+			return res;
+		}
+
+		Message saved = messageService.saveMessage(currentUser.getUserId(), receiverId, content.trim());
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+		sdf.setTimeZone(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+
+		res.put("success", true);
+		res.put("messageId", saved.getMessageId());
+		res.put("senderId", currentUser.getUserId());
+		res.put("senderUsername", currentUser.getUsername());
+		res.put("senderAvatar", currentUser.getAvatar());
+		res.put("receiverId", receiverId);
+		res.put("content", saved.getContent());
+		res.put("createdAt", sdf.format(saved.getCreatedAt()));
+		return res;
+	}
 }

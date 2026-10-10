@@ -378,9 +378,17 @@
             };
         }
 
-        // Xử lý hiển thị tin nhắn mới nhận hoặc vừa gửi
+        const renderedMessageIds = new Set();
+
+        // Xử lý hiển thị tin nhắn mới nhận hoặc vừa gửi ngay lập tức (Realtime)
         function renderIncomingMessage(data) {
             if (!data || !data.content) return;
+
+            // Chống trùng tin nhắn nếu đã render
+            if (data.messageId) {
+                if (renderedMessageIds.has(data.messageId)) return;
+                renderedMessageIds.add(data.messageId);
+            }
 
             // Kiểm tra xem tin nhắn có thuộc cuộc hội thoại đang mở không
             const isRelevant = activeUserId && 
@@ -405,34 +413,68 @@
 
                 // Cuộn xuống tin nhắn mới nhất
                 scrollToBottom();
+
+                // Cập nhật dòng preview tin nhắn bên danh sách đối tác chat bên trái
+                const partnerItem = document.querySelector('.inbox-partner-item[data-user-id="' + activeUserId + '"]');
+                if (partnerItem) {
+                    const statusEl = partnerItem.querySelector('.inbox-partner-status');
+                    if (statusEl) {
+                        statusEl.textContent = (isSelf ? 'Bạn: ' : '') + data.content;
+                    }
+                }
             } else if (data.senderId !== currentUserId) {
                 // Nhận tin nhắn từ người khác khi đang mở chat người khác
                 highlightPartner(data.senderId);
             }
         }
 
-        // Gửi tin nhắn qua WebSocket
+        // Gửi tin nhắn qua WebSocket (có hỗ trợ tự động fallback sang AJAX HTTP)
         function handleSendChat(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             if (!chatInput) return;
 
             const text = chatInput.value.trim();
             if (!text || !activeUserId) return;
 
-            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
-                alert('Mất kết nối WebSocket. Đang kết nối lại, vui lòng thử lại sau giây lát!');
-                return;
-            }
-
-            const payload = {
-                receiverId: activeUserId,
-                content: text
-            };
-
-            chatSocket.send(JSON.stringify(payload));
+            // Xóa nội dung trong ô nhập và focus lại ngay để gõ tiếp
             chatInput.value = '';
             handleChatInputChange(chatInput);
             chatInput.focus();
+
+            // 1. Thử gửi qua WebSocket nếu kết nối đang mở
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                const payload = {
+                    receiverId: activeUserId,
+                    content: text
+                };
+                chatSocket.send(JSON.stringify(payload));
+                return;
+            }
+
+            // 2. Dự phòng: Nếu WebSocket chưa kết nối/bị rớt mạng, gửi qua AJAX HTTP
+            console.log('[Direct Chat] WebSocket chưa sẵn sàng, đang gửi qua AJAX...');
+            const params = new URLSearchParams();
+            params.append('receiverId', activeUserId);
+            params.append('content', text);
+
+            fetch(contextPath + '/direct/api/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: params.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderIncomingMessage(data);
+                } else {
+                    alert(data.message || 'Không thể gửi tin nhắn.');
+                }
+            })
+            .catch(err => {
+                console.error('[Direct Chat] Lỗi gửi tin nhắn qua HTTP fallback:', err);
+            });
         }
 
         // Bật/tắt nút 'Gửi' so với các icon 'Mic, Ảnh, Tim' khi gõ chữ
@@ -479,15 +521,33 @@
         // Gửi tim nhanh khi bấm icon Tim ở góc phải
         function sendQuickHeart() {
             if (!activeUserId) return;
-            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
-                alert('Mất kết nối WebSocket. Đang kết nối lại, vui lòng thử lại sau giây lát!');
+            const text = '❤️';
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                const payload = {
+                    receiverId: activeUserId,
+                    content: text
+                };
+                chatSocket.send(JSON.stringify(payload));
                 return;
             }
-            const payload = {
-                receiverId: activeUserId,
-                content: '❤️'
-            };
-            chatSocket.send(JSON.stringify(payload));
+
+            const params = new URLSearchParams();
+            params.append('receiverId', activeUserId);
+            params.append('content', text);
+
+            fetch(contextPath + '/direct/api/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: params.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderIncomingMessage(data);
+                }
+            });
         }
 
         // Kích hoạt chọn ảnh gửi
