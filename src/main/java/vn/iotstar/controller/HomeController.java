@@ -136,6 +136,7 @@ public class HomeController {
 
 		List<vn.iotstar.entity.Comment> list = commentService.getCommentsByPost(postId);
 		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+		sdf.setTimeZone(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
 		List<java.util.Map<String, Object>> dtos = new java.util.ArrayList<>();
 		for (vn.iotstar.entity.Comment c : list) {
 			java.util.Map<String, Object> dto = new java.util.HashMap<>();
@@ -176,6 +177,102 @@ public class HomeController {
 			res.put("commentCount", commentService.getCommentCount(postId));
 		}
 		return res;
+	}
+
+	// Chức năng: Lấy thông tin chi tiết bài viết + tác giả + bình luận phục vụ Modal Instagram
+	@GetMapping(value = "/api/posts/{postId}", produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public java.util.Map<String, Object> getPostDetail(@PathVariable("postId") Integer postId, HttpSession session) {
+		java.util.Map<String, Object> res = new java.util.HashMap<>();
+		java.util.Optional<Post> postOpt = postService.getPostById(postId);
+		if (!postOpt.isPresent()) {
+			res.put("success", false);
+			res.put("message", "Bài viết không tồn tại");
+			return res;
+		}
+
+		Post post = postOpt.get();
+		User currentUser = (User) session.getAttribute("currentUser");
+		Integer currentUserId = currentUser != null ? currentUser.getUserId() : null;
+
+		java.util.Map<String, Object> postDto = new java.util.HashMap<>();
+		postDto.put("postId", post.getPostId());
+		postDto.put("caption", post.getCaption() != null ? post.getCaption() : "");
+		postDto.put("imageUrl", post.getImageUrl());
+		postDto.put("isVideo", post.isVideo());
+
+		java.text.SimpleDateFormat sdfDate = new java.text.SimpleDateFormat("d 'THÁNG' M, yyyy");
+		sdfDate.setTimeZone(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+		java.text.SimpleDateFormat sdfFull = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+		sdfFull.setTimeZone(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+		postDto.put("createdAtFormatted", sdfDate.format(post.getCreatedAt()).toUpperCase());
+		postDto.put("createdAtFull", sdfFull.format(post.getCreatedAt()));
+		postDto.put("timeAgo", formatTimeAgo(post.getCreatedAt()));
+
+		// Thông tin tác giả bài viết
+		java.util.Map<String, Object> userDto = new java.util.HashMap<>();
+		userDto.put("userId", post.getUser().getUserId());
+		userDto.put("username", post.getUser().getUsername());
+		userDto.put("fullname", post.getUser().getFullname());
+		userDto.put("avatar", (post.getUser().getAvatar() != null && !post.getUser().getAvatar().isEmpty()) 
+				? post.getUser().getAvatar() : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150");
+		postDto.put("user", userDto);
+
+		// Thống kê Lượt thích & Trạng thái đã thích
+		long likeCount = likeService.getLikeCount(postId);
+		boolean isLiked = currentUserId != null && likeService.isLiked(postId, currentUserId);
+		long commentCount = commentService.getCommentCount(postId);
+		boolean canDelete = currentUserId != null && post.getUser().getUserId().equals(currentUserId);
+		boolean isFollowing = currentUserId != null && followService.isFollowing(currentUserId, post.getUser().getUserId());
+		boolean isMe = currentUserId != null && post.getUser().getUserId().equals(currentUserId);
+
+		postDto.put("likeCount", likeCount);
+		postDto.put("liked", isLiked);
+		postDto.put("commentCount", commentCount);
+		postDto.put("canDelete", canDelete);
+		postDto.put("isFollowing", isFollowing);
+		postDto.put("isMe", isMe);
+
+		// Danh sách bình luận
+		List<vn.iotstar.entity.Comment> list = commentService.getCommentsByPost(postId);
+		List<java.util.Map<String, Object>> commentDtos = new java.util.ArrayList<>();
+		for (vn.iotstar.entity.Comment c : list) {
+			java.util.Map<String, Object> cDto = new java.util.HashMap<>();
+			cDto.put("commentId", c.getCommentId());
+			cDto.put("userId", c.getUser().getUserId());
+			cDto.put("username", c.getUser().getUsername());
+			cDto.put("avatar", (c.getUser().getAvatar() != null && !c.getUser().getAvatar().isEmpty())
+					? c.getUser().getAvatar() : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150");
+			cDto.put("fullname", c.getUser().getFullname());
+			cDto.put("content", c.getContent());
+			cDto.put("createdAt", sdfFull.format(c.getCreatedAt()));
+			cDto.put("timeAgo", formatTimeAgo(c.getCreatedAt()));
+			cDto.put("canDelete", currentUserId != null &&
+					(c.getUser().getUserId().equals(currentUserId) || post.getUser().getUserId().equals(currentUserId)));
+			commentDtos.add(cDto);
+		}
+
+		res.put("success", true);
+		res.put("post", postDto);
+		res.put("comments", commentDtos);
+		return res;
+	}
+
+	private String formatTimeAgo(java.util.Date date) {
+		if (date == null) return "";
+		long diffMillis = System.currentTimeMillis() - date.getTime();
+		long seconds = Math.max(0, diffMillis / 1000);
+		if (seconds < 60) return "vừa xong";
+		long minutes = seconds / 60;
+		if (minutes < 60) return minutes + "m";
+		long hours = minutes / 60;
+		if (hours < 24) return hours + "h";
+		long days = hours / 24;
+		if (days < 7) return days + "d";
+		long weeks = days / 7;
+		if (weeks < 52) return weeks + "w";
+		long years = weeks / 52;
+		return years + "y";
 	}
 
 	// Chức năng: Follow / Bỏ follow bạn bè bằng Ajax
@@ -252,5 +349,25 @@ public class HomeController {
 			postService.deletePost(postId, currentUser.getUserId());
 		}
 		return "redirect:" + redirectUrl;
+	}
+
+	// Chức năng: Tìm kiếm người dùng bằng Ajax
+	@GetMapping(value = "/api/users/search", produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public java.util.Map<String, Object> searchUsers(@RequestParam(value = "q", required = false) String query) {
+		java.util.Map<String, Object> res = new java.util.HashMap<>();
+		java.util.List<User> users = userService.searchUsers(query);
+		java.util.List<java.util.Map<String, Object>> dtos = new java.util.ArrayList<>();
+		for (User u : users) {
+			java.util.Map<String, Object> dto = new java.util.HashMap<>();
+			dto.put("userId", u.getUserId());
+			dto.put("username", u.getUsername());
+			dto.put("fullname", u.getFullname());
+			dto.put("avatar", u.getAvatar());
+			dtos.add(dto);
+		}
+		res.put("success", true);
+		res.put("users", dtos);
+		return res;
 	}
 }

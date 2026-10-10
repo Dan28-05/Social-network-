@@ -76,6 +76,13 @@
 			<version>1.2</version>
 		</dependency>
 
+		<!-- SiteMesh (Decorator Tag Library) -->
+		<dependency>
+			<groupId>opensymphony</groupId>
+			<artifactId>sitemesh</artifactId>
+			<version>2.4.2</version>
+		</dependency>
+
 		<!-- Spring WebSocket -->
 		<dependency>
 			<groupId>org.springframework</groupId>

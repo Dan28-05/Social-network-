@@ -57,4 +57,12 @@ public class UserService {
 				.filter(u -> !u.getUserId().equals(currentUserId))
 				.collect(java.util.stream.Collectors.toList());
 	}
+
+	public java.util.List<User> searchUsers(String query) {
+		if (query == null || query.trim().isEmpty()) {
+			return java.util.Collections.emptyList();
+		}
+		String q = query.trim();
+		return userRepository.findByUsernameContainingIgnoreCaseOrFullnameContainingIgnoreCase(q, q);
+	}
 }

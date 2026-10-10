@@ -73,8 +73,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		resp.put("senderUsername", saved.getSender().getUsername());
 		resp.put("senderAvatar", saved.getSender().getAvatar());
 		resp.put("receiverId", receiverId);
-		resp.put("content", saved.getContent());
-		resp.put("createdAt", new SimpleDateFormat("HH:mm").format(saved.getCreatedAt()));
+		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+		timeFormat.setTimeZone(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+		resp.put("createdAt", timeFormat.format(saved.getCreatedAt()));
 
 		String jsonResponse = objectMapper.writeValueAsString(resp);
 		TextMessage outMsg = new TextMessage(jsonResponse);

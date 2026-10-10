@@ -8,6 +8,7 @@ import vn.iotstar.repository.PostRepository;
 import vn.iotstar.repository.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PostService {
@@ -68,5 +69,11 @@ public class PostService {
 			}
 			return false; // Không có quyền xóa bài của người khác
 		}).orElse(false);
+	}
+
+	// Lấy chi tiết một bài viết theo ID
+	public Optional<Post> getPostById(Integer postId) {
+		if (postId == null) return Optional.empty();
+		return postRepository.findById(postId);
 	}
 }

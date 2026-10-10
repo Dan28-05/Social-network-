@@ -8,6 +8,13 @@ import javax.servlet.Filter;
 public class SpringWebAppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
 
 	@Override
+	public void onStartup(javax.servlet.ServletContext servletContext) throws javax.servlet.ServletException {
+		java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+		servletContext.setInitParameter("javax.servlet.jsp.jstl.fmt.timeZone", "Asia/Ho_Chi_Minh");
+		super.onStartup(servletContext);
+	}
+
+	@Override
 	protected Class<?>[] getRootConfigClasses() {
 		return new Class<?>[] { ApplicationContextConfig.class };
 	}

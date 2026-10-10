@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/templates/css/style.css">
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/templates/css/style.css?v=20261010_light_v1">
 </head>
 <body class="ig-dark-body">
     <div class="ig-app-wrapper">
@@ -77,10 +77,6 @@
                         <span>REELS</span>
                     </a>
                     <a href="javascript:void(0)" class="profile-tab">
-                        <i class="fa-regular fa-bookmark"></i>
-                        <span>ĐÃ LƯU</span>
-                    </a>
-                    <a href="javascript:void(0)" class="profile-tab">
                         <i class="fa-regular fa-id-badge"></i>
                         <span>ĐƯỢC GẮN THẺ</span>
                     </a>
@@ -101,7 +97,7 @@
                         </c:when>
                         <c:otherwise>
                             <c:forEach items="${posts}" var="post">
-                                <div class="grid-card-box">
+                                <div class="grid-card-box" onclick="openPostDetailModal('${post.postId}')" style="cursor: pointer;">
                                     <c:set var="resolvedMediaUrl">
                                         <c:choose>
                                             <c:when test="${post.imageUrl.startsWith('http://') || post.imageUrl.startsWith('https://') || post.imageUrl.startsWith('data:')}">
@@ -125,14 +121,14 @@
 
                                     <div class="grid-card-overlay">
                                         <div class="grid-hover-stats">
-                                            <span><i class="fa-solid fa-heart"></i> ${likeCounts[post.postId] != null ? likeCounts[post.postId] : 0}</span>
-                                            <span><i class="fa-solid fa-comment"></i> ${commentCounts[post.postId] != null ? commentCounts[post.postId] : 0}</span>
+                                            <span><i class="fa-solid fa-heart"></i> <span id="profileLikeCount-${post.postId}">${likeCounts[post.postId] != null ? likeCounts[post.postId] : 0}</span></span>
+                                            <span><i class="fa-solid fa-comment"></i> <span id="profileCommentCount-${post.postId}">${commentCounts[post.postId] != null ? commentCounts[post.postId] : 0}</span></span>
                                         </div>
                                         <c:if test="${isOwner}">
-                                            <form action="${pageContext.request.contextPath}/posts/delete/${post.postId}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này khỏi trang cá nhân?');">
+                                            <form action="${pageContext.request.contextPath}/posts/delete/${post.postId}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này khỏi trang cá nhân?');" onclick="event.stopPropagation();">
                                                 <input type="hidden" name="redirect" value="/profile" />
-                                                <button type="submit" class="grid-delete-action" title="Xóa bài viết">
-                                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                                <button type="submit" class="grid-delete-action" title="Xóa bài viết" onclick="event.stopPropagation();">
+                                                    <i class="fa-solid fa-trash-can"></i>
                                                 </button>
                                             </form>
                                         </c:if>
@@ -148,6 +144,9 @@
 
     <!-- Modal Tạo Bài Viết Mới Chuẩn Instagram Hiện Đại -->
     <jsp:include page="/WEB-INF/views/commons/create-modal.jsp" />
+
+    <!-- Modal Xem Chi Tiết Bài Viết & Bình Luận Chuẩn Instagram (2 Cột) -->
+    <jsp:include page="/WEB-INF/views/commons/post-detail-modal.jsp" />
 
     <script>
         function handleProfileFollow(userId, btn) {

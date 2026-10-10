@@ -22,28 +22,30 @@
             <!-- Ẩn Input File Thực Tế (nhận file từ máy tính) -->
             <input type="file" id="mediaFileInput" name="mediaFile" accept="image/*,video/*" style="display: none;" onchange="handleFileSelected(this.files)" />
 
-            <!-- GIAI ĐOẠN 1: Khu Vực Kéo Thả / Chọn File Từ Máy Tính (Dropzone) -->
+            <!-- GIAI ĐOẠN 1: Khu Vực Chọn File / Kéo Thả Hiện Đại, Tối Giản -->
             <div class="create-dropzone-section" id="dropzoneSection">
                 <div class="dropzone-box" id="dropzoneBox" onclick="document.getElementById('mediaFileInput').click()">
-                    <div class="dropzone-icon-circle">
-                        <i class="fa-solid fa-photo-film"></i>
-                    </div>
-                    <h4 class="dropzone-text">Kéo ảnh và video vào đây</h4>
-                    <p class="dropzone-subtext">Hỗ trợ các định dạng JPG, PNG, WEBP, MP4, WEBM...</p>
+                    <!-- Biểu tượng Media chuẩn Instagram -->
+                    <svg aria-label="Biểu tượng đa phương tiện" class="ig-media-icon" fill="currentColor" height="77" role="img" viewBox="0 0 97.6 77.3" width="96">
+                        <path d="M16.3 24h.3c2.8-.2 4.9-2.6 4.8-5.4-.2-2.8-2.6-4.9-5.4-4.8s-4.9 2.6-4.8 5.4c.1 2.7 2.4 4.8 5.1 4.8zm-2.4-7.2c.5-.6 1.3-1 2.1-1h.2c1.7 0 3.1 1.4 3.1 3.1 0 1.7-1.4 3.1-3.1 3.1-1.7 0-3.1-1.4-3.1-3.1 0-.8.3-1.5.8-2.1z" fill="currentColor"></path>
+                        <path d="M84.7 18.4L58 16.9l-.2-3c-.3-5.7-5.2-10.1-11-9.8L12.9 6c-5.7.3-10.1 5.3-9.8 11L5 51v.8c.7 5.2 5.1 9.1 10.3 9.1h.6l21.7-1.2v.6c-.3 5.7 4 10.5 9.8 10.8l36.4 2c.2 0 .3 0 .5 0 5.5 0 10.1-4.3 10.4-9.9l3.1-55.4c.3-5.8-4-10.5-9.8-10.8zM6 51l-1.9-34c-.2-4.1 3-7.7 7.1-7.9l33.9-2c4.1-.2 7.7 3 7.9 7.1l.2 3.1-33.8 2c-5.8.3-10.2 5.1-9.9 10.9L11 49.3c-2.8 1.4-4.7 4-5 7.1V51zm88 15.3c-.2 4.1-3.7 7.4-7.8 7.2l-36.4-2c-4.1-.2-7.4-3.7-7.2-7.8l3.1-55.4c.2-4.1 3.7-7.4 7.8-7.2l36.4 2c4.1.2 7.4 3.7 7.2 7.8l-3.1 55.4z" fill="currentColor"></path>
+                        <path d="M72.7 39.5c-1.3-1.3-3.4-1.3-4.7 0l-12 12-4.1-4.1c-1.3-1.3-3.4-1.3-4.7 0l-11.5 11.5c-1.3 1.3-1.3 3.4 0 4.7 1.3 1.3 3.4 1.3 4.7 0l9.1-9.1 4.1 4.1c1.3 1.3 3.4 1.3 4.7 0l14.4-14.4c1.3-1.3 1.3-3.4 0-4.7z" fill="currentColor"></path>
+                    </svg>
+                    <span class="dropzone-text">Kéo ảnh và video vào đây</span>
                     
                     <button type="button" class="btn-select-computer" onclick="event.stopPropagation(); document.getElementById('mediaFileInput').click();">
-                        <i class="fa-solid fa-desktop"></i> Chọn từ máy tính
+                        Chọn từ máy tính
                     </button>
                 </div>
 
-                <!-- Tùy chọn phụ: Dán URL nếu muốn -->
+                <!-- Tùy chọn dán URL tối giản -->
                 <div class="dropzone-url-fallback">
                     <button type="button" class="btn-toggle-url" onclick="toggleUrlInput()">
-                        <i class="fa-solid fa-link"></i> Hoặc dán đường dẫn ảnh / video từ Internet
+                        <i class="fa-solid fa-link"></i> Dán liên kết ảnh / video
                     </button>
                     <div class="url-input-wrap" id="urlInputWrap" style="display: none;">
                         <div class="url-input-inner">
-                            <input type="url" id="mediaUrlInput" name="imageUrl" class="ig-dark-input" placeholder="https://images.unsplash.com/... hoặc link mp4" />
+                            <input type="url" id="mediaUrlInput" name="imageUrl" class="ig-dark-input" placeholder="Dán link ảnh hoặc video..." />
                             <button type="button" class="btn-apply-url" onclick="handleUrlPreview()">Xem trước</button>
                         </div>
                     </div>

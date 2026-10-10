@@ -37,6 +37,10 @@ public class ChatController {
 		List<User> partners = messageService.getChatPartners(currentUser.getUserId());
 		model.addAttribute("partners", partners);
 
+		// Lấy danh sách người dùng cho Stories Carousel (giống hệt trang Home)
+		List<User> otherUsers = userService.getAllOtherUsers(currentUser.getUserId());
+		model.addAttribute("storyUsers", otherUsers);
+
 		User activeUser = null;
 		if (targetUserId != null) {
 			activeUser = userService.findById(targetUserId).orElse(null);
@@ -83,6 +87,7 @@ public class ChatController {
 		List<Message> list = messageService.getConversation(currentUser.getUserId(), targetUserId);
 
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+		sdf.setTimeZone(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
 		List<Map<String, Object>> msgDtos = new ArrayList<>();
 		for (Message m : list) {
 			Map<String, Object> dto = new HashMap<>();

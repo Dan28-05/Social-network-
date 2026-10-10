@@ -19,6 +19,10 @@ import java.util.Properties;
 @EnableJpaRepositories(basePackages = "vn.iotstar.repository")
 public class ApplicationContextConfig {
 
+	static {
+		java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+	}
+
 	@Bean
 	public DataSource dataSource() {
 		DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -42,6 +46,7 @@ public class ApplicationContextConfig {
 		properties.setProperty("hibernate.dialect", "org.hibernate.dialect.SQLServer2012Dialect");
 		properties.setProperty("hibernate.show_sql", "true");
 		properties.setProperty("hibernate.hbm2ddl.auto", "none");
+		properties.setProperty("hibernate.jdbc.time_zone", "Asia/Ho_Chi_Minh");
 		em.setJpaProperties(properties);
 
 		return em;
